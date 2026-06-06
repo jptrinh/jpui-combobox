@@ -6,7 +6,7 @@ export default {
             {
                 label: 'Input',
                 isCollapsible: true,
-                properties: ['placeholderColor', 'iconColor', 'iconSize'],
+                properties: ['inputFontSize', 'inputFontWeight', 'placeholderColor', 'iconColor', 'iconSize'],
             },
             {
                 label: 'Dropdown',
@@ -29,6 +29,8 @@ export default {
                 label: 'Option',
                 isCollapsible: true,
                 properties: [
+                    'optionFontSize',
+                    'optionFontWeight',
                     'optionFontColor',
                     'optionBgColor',
                     'optionBgColorHover',
@@ -45,6 +47,11 @@ export default {
                 isCollapsible: true,
                 properties: ['emptyStateFontColor', 'emptyStatePadding'],
             },
+            {
+                label: 'Create option',
+                isCollapsible: true,
+                properties: ['createOptionFontSize', 'createOptionFontWeight', 'createOptionFontColor', 'createOptionBgColor', 'createOptionBgColorHover'],
+            },
         ],
         customSettingsPropertiesOrder: [
             'choices',
@@ -58,12 +65,16 @@ export default {
                 properties: [
                     'placeholder',
                     'emptyStateText',
+                    'allowCreate',
+                    'createOptionLabel',
                     'clearable',
                     'closeOnSelect',
                     'disabled',
                     'readonly',
                     'invalid',
                     'required',
+                    'forceOpen',
+                    'forceEmptyState',
                 ],
             },
             'formInfobox',
@@ -82,6 +93,7 @@ export default {
         { name: 'blur', label: { en: 'On blur' }, event: null },
         { name: 'dropdownClose', label: { en: 'On dropdown close' }, event: null },
         { name: 'search', label: { en: 'On search' }, event: { value: '' } },
+        { name: 'create', label: { en: 'On create' }, event: { value: '' } },
     ],
     actions: [
         { label: 'Open', action: 'actionOpenDropdown', args: [] },
@@ -210,6 +222,34 @@ export default {
             },
             /* wwEditor:end */
         },
+        allowCreate: {
+            label: { en: 'Allow create' },
+            type: 'OnOff',
+            section: 'settings',
+            defaultValue: false,
+            bindable: true,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'boolean',
+                tooltip: 'Show a "Create" option when the search query has no exact match.',
+            },
+            /* wwEditor:end */
+        },
+        createOptionLabel: {
+            label: { en: 'Create option label' },
+            type: 'Text',
+            section: 'settings',
+            multiLang: true,
+            bindable: true,
+            defaultValue: { en: 'Create "{query}"' },
+            hidden: content => !content?.allowCreate,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Label for the create option. Use {query} as a placeholder for the typed value.',
+            },
+            /* wwEditor:end */
+        },
         clearable: {
             label: { en: 'Clearable' },
             type: 'OnOff',
@@ -288,6 +328,20 @@ export default {
             },
             /* wwEditor:end */
         },
+        /* wwEditor:start */
+        forceOpen: {
+            label: { en: 'Force open (editor)' },
+            type: 'OnOff',
+            section: 'settings',
+            defaultValue: false,
+        },
+        forceEmptyState: {
+            label: { en: 'Force empty state (editor)' },
+            type: 'OnOff',
+            section: 'settings',
+            defaultValue: false,
+        },
+        /* wwEditor:end */
 
         // ── FORM ──────────────────────────────────────────────────────────────
         /* wwEditor:start */
@@ -334,6 +388,43 @@ export default {
         },
 
         // ── STYLE: INPUT ──────────────────────────────────────────────────────
+        inputFontSize: {
+            label: { en: 'Font size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 8, max: 72 },
+                    { value: 'rem', label: 'rem', min: 0.5, max: 4 },
+                    { value: 'em', label: 'em', min: 0.5, max: 4 },
+                ],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '16px',
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Font size of the input text (e.g. "14px", "1rem").',
+            },
+            /* wwEditor:end */
+        },
+        inputFontWeight: {
+            label: { en: 'Font weight' },
+            type: 'Number',
+            section: 'style',
+            options: { min: 100, max: 900, step: 100 },
+            bindable: true,
+            responsive: true,
+            defaultValue: 400,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'number',
+                tooltip: 'Font weight of the input text (100–900).',
+            },
+            /* wwEditor:end */
+        },
         placeholderColor: {
             label: { en: 'Placeholder color' },
             type: 'Color',
@@ -547,6 +638,43 @@ export default {
         },
 
         // ── STYLE: OPTIONS ────────────────────────────────────────────────────
+        optionFontSize: {
+            label: { en: 'Font size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 8, max: 72 },
+                    { value: 'rem', label: 'rem', min: 0.5, max: 4 },
+                    { value: 'em', label: 'em', min: 0.5, max: 4 },
+                ],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: "16px",
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Font size of option items (e.g. "14px", "1rem").',
+            },
+            /* wwEditor:end */
+        },
+        optionFontWeight: {
+            label: { en: 'Font weight' },
+            type: 'Number',
+            section: 'style',
+            options: { min: 100, max: 900, step: 100 },
+            bindable: true,
+            responsive: true,
+            defaultValue: 400,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'number',
+                tooltip: 'Font weight of option items (100–900).',
+            },
+            /* wwEditor:end */
+        },
         optionFontColor: {
             label: { en: 'Text color' },
             type: 'Color',
@@ -661,6 +789,79 @@ export default {
             bindable: true,
             responsive: true,
             defaultValue: '8px 12px',
+        },
+
+        // ── STYLE: CREATE OPTION ──────────────────────────────────────────────
+        createOptionFontSize: {
+            label: { en: 'Font size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 8, max: 72 },
+                    { value: 'rem', label: 'rem', min: 0.5, max: 4 },
+                    { value: 'em', label: 'em', min: 0.5, max: 4 },
+                ],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: "16px",
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Font size of the create option button (e.g. "14px", "1rem").',
+            },
+            /* wwEditor:end */
+        },
+        createOptionFontWeight: {
+            label: { en: 'Font weight' },
+            type: 'Number',
+            section: 'style',
+            options: { min: 100, max: 900, step: 100 },
+            bindable: true,
+            responsive: true,
+            defaultValue: 500,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'number',
+                tooltip: 'Font weight of the create option button (100–900).',
+            },
+            /* wwEditor:end */
+        },
+        createOptionFontColor: {
+            label: { en: 'Text color' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            states: true,
+            classes: true,
+            defaultValue: '#111827',
+            /* wwEditor:start */
+            bindingValidation: {
+                cssSupports: 'color',
+                type: 'string',
+                tooltip: 'Text color of the create option.',
+            },
+            /* wwEditor:end */
+        },
+        createOptionBgColor: {
+            label: { en: 'Background' },
+            type: 'Color',
+            section: 'style',
+            options: { nullable: true },
+            bindable: true,
+            responsive: true,
+            defaultValue: null,
+        },
+        createOptionBgColorHover: {
+            label: { en: 'Background (hover / focused)' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            defaultValue: '#f3f4f6',
         },
     },
 };

@@ -5,7 +5,7 @@
         :class="{
             'is-disabled': isDisabled,
             'is-readonly': isReadonly,
-            'is-open': isOpen,
+            'is-open': isOpenEffective,
         }"
         :style="triggerCssVars"
         @keydown="handleKeydown"
@@ -17,7 +17,7 @@
             type="text"
             autocomplete="off"
             role="combobox"
-            :aria-expanded="isOpen"
+            :aria-expanded="isOpenEffective"
             :aria-haspopup="'listbox'"
             :aria-activedescendant="activeDescendantId"
             :aria-invalid="isInvalid || undefined"
@@ -49,7 +49,7 @@
         <!-- Chevron button -->
         <button
             class="combobox__chevron-btn"
-            :class="{ 'is-open': isOpen }"
+            :class="{ 'is-open': isOpenEffective }"
             type="button"
             tabindex="-1"
             @click.stop="toggleDropdown"
@@ -61,7 +61,7 @@
         </button>
 
         <!-- Dropdown (teleported to #app) -->
-        <teleport v-if="isOpen" :to="appRoot">
+        <teleport v-if="isOpenEffective" :to="appRoot">
             <div
                 ref="dropdownRef"
                 class="combobox__dropdown"
@@ -104,8 +104,26 @@
                             <span class="combobox__option-label">{{ option.label }}</span>
                         </div>
                     </template>
-                    <div v-else class="combobox__empty">
+                    <div v-else-if="!showCreateOption" class="combobox__empty">
                         {{ emptyText }}
+                    </div>
+                    <div
+                        v-if="showCreateOption"
+                        :id="`${dropdownId}-opt-create`"
+                        class="combobox__option combobox__create-option"
+                        :class="{ 'is-active': activeIndex === filteredOptions.length }"
+                        role="option"
+                        :aria-selected="false"
+                        @click="selectCreateOption"
+                        @mouseenter="activeIndex = filteredOptions.length"
+                    >
+                        <span class="combobox__option-check" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </span>
+                        <span class="combobox__option-label">{{ createOptionText }}</span>
                     </div>
                 </div>
             </div>
@@ -160,6 +178,13 @@ export default {
         const activeIndex = ref(-1);
         const inputText = ref('');
         const isTyping = ref(false);
+
+        const isOpenEffective = computed(() => {
+            /* wwEditor:start */
+            if (props.content?.forceOpen) return true;
+            /* wwEditor:end */
+            return isOpen.value;
+        });
 
         const appRoot = shallowRef(wwLib.getFrontDocument().querySelector('#app'));
         const dropdownId = `combobox-${props.uid}`;
@@ -262,6 +287,9 @@ export default {
         );
 
         const filteredOptions = computed(() => {
+            /* wwEditor:start */
+            if (props.content?.forceEmptyState) return [];
+            /* wwEditor:end */
             if (!isTyping.value) return processedOptions.value;
             const q = (inputText.value ?? '').toLowerCase().trim();
             if (!q) return processedOptions.value;
@@ -277,8 +305,25 @@ export default {
         const placeholderText = computed(() => wwLib.wwLang?.getText(props.content?.placeholder) || '');
         const emptyText = computed(() => wwLib.wwLang?.getText(props.content?.emptyStateText) || 'No results found.');
 
+        const allowCreate = computed(() => props.content?.allowCreate || false);
+        const createOptionText = computed(() => {
+            const template = wwLib.wwLang?.getText(props.content?.createOptionLabel) || 'Create "{query}"';
+            return template.replace('{query}', inputText.value || '');
+        });
+        const showCreateOption = computed(() => {
+            if (!allowCreate.value || !isTyping.value) return false;
+            const q = (inputText.value || '').trim();
+            if (!q) return false;
+            return !processedOptions.value.some(
+                o => o.label.toLowerCase() === q.toLowerCase()
+            );
+        });
+
         const activeDescendantId = computed(() => {
             if (!isOpen.value || activeIndex.value < 0) return undefined;
+            if (showCreateOption.value && activeIndex.value === filteredOptions.value.length) {
+                return `${dropdownId}-opt-create`;
+            }
             return `${dropdownId}-opt-${activeIndex.value}`;
         });
 
@@ -387,6 +432,14 @@ export default {
             });
         }
 
+        function selectCreateOption() {
+            const q = (inputText.value || '').trim();
+            if (!q) return;
+            emit('trigger-event', { name: 'create', event: { value: q } });
+            closeDropdown();
+            nextTick(() => inputRef.value?.focus());
+        }
+
         function isOptionSelected(option) {
             const val = variableValue.value;
             if (val === null || val === undefined || val === '') return false;
@@ -400,7 +453,10 @@ export default {
                 case 'ArrowDown':
                     event.preventDefault();
                     if (!isOpen.value) { openDropdown(); return; }
-                    activeIndex.value = Math.min(activeIndex.value + 1, filteredOptions.value.length - 1);
+                    activeIndex.value = Math.min(
+                        activeIndex.value + 1,
+                        filteredOptions.value.length - 1 + (showCreateOption.value ? 1 : 0)
+                    );
                     scrollActiveOptionIntoView();
                     break;
                 case 'ArrowUp':
@@ -412,8 +468,12 @@ export default {
                 case 'Enter':
                     event.preventDefault();
                     if (isOpen.value && activeIndex.value >= 0) {
-                        const opt = filteredOptions.value[activeIndex.value];
-                        if (opt) selectOption(opt);
+                        if (showCreateOption.value && activeIndex.value === filteredOptions.value.length) {
+                            selectCreateOption();
+                        } else {
+                            const opt = filteredOptions.value[activeIndex.value];
+                            if (opt) selectOption(opt);
+                        }
                     }
                     break;
                 case 'Escape':
@@ -429,7 +489,8 @@ export default {
 
         function scrollActiveOptionIntoView() {
             nextTick(() => {
-                const id = `${dropdownId}-opt-${activeIndex.value}`;
+                const isCreate = showCreateOption.value && activeIndex.value === filteredOptions.value.length;
+                const id = isCreate ? `${dropdownId}-opt-create` : `${dropdownId}-opt-${activeIndex.value}`;
                 const el = wwLib.getFrontDocument().getElementById(id);
                 el?.scrollIntoView({ block: 'nearest' });
             });
@@ -471,6 +532,8 @@ export default {
             '--placeholder-color': props.content?.placeholderColor || '#9ca3af',
             '--icon-color': props.content?.iconColor || '#6b7280',
             '--icon-size': props.content?.iconSize || '16px',
+            '--input-font-size': props.content?.inputFontSize || '16px',
+            '--input-font-weight': props.content?.inputFontWeight || null,
         }));
 
         const dropdownCssVars = computed(() => ({
@@ -491,6 +554,13 @@ export default {
             '--option-check-color': props.content?.optionCheckmarkColor || '#111827',
             '--empty-color': props.content?.emptyStateFontColor || '#6b7280',
             '--empty-padding': props.content?.emptyStatePadding || '8px 12px',
+            '--create-option-color': props.content?.createOptionFontColor || '#111827',
+            '--create-option-bg': props.content?.createOptionBgColor || 'transparent',
+            '--create-option-bg-hover': props.content?.createOptionBgColorHover || '#f3f4f6',
+            '--option-font-size': props.content?.optionFontSize || null,
+            '--option-font-weight': props.content?.optionFontWeight || null,
+            '--create-option-font-size': props.content?.createOptionFontSize || null,
+            '--create-option-font-weight': props.content?.createOptionFontWeight || null,
         }));
 
         // ── Local context ─────────────────────────────────────────────────────
@@ -568,6 +638,7 @@ context.local.data?.['combobox']?.['isOpen']
             dropdownRef,
             inputRef,
             isOpen,
+            isOpenEffective,
             isDisabled,
             isReadonly,
             isInvalid,
@@ -585,6 +656,9 @@ context.local.data?.['combobox']?.['isOpen']
             fieldNameValue,
             appRoot,
             isOptionSelected,
+            showCreateOption,
+            createOptionText,
+            selectCreateOption,
             triggerCssVars,
             dropdownCssVars,
             handleInput,
@@ -635,6 +709,8 @@ context.local.data?.['combobox']?.['isOpen']
         outline: none;
         background: transparent;
         font: inherit;
+        font-size: var(--input-font-size, inherit);
+        font-weight: var(--input-font-weight, inherit);
         color: inherit;
         padding: 0;
         cursor: inherit;
@@ -715,6 +791,8 @@ context.local.data?.['combobox']?.['isOpen']
         border-radius: var(--option-radius, 4px);
         color: var(--option-color, #111827);
         background: var(--option-bg, transparent);
+        font-size: var(--option-font-size, inherit);
+        font-weight: var(--option-font-weight, inherit);
         cursor: pointer;
         user-select: none;
         transition: background 0.1s ease, color 0.1s ease;
@@ -765,6 +843,18 @@ context.local.data?.['combobox']?.['isOpen']
         color: var(--empty-color, #6b7280);
         text-align: center;
         font-size: 0.875em;
+    }
+
+    .combobox__create-option {
+        color: var(--create-option-color, #111827);
+        background: var(--create-option-bg, transparent);
+        font-size: var(--create-option-font-size, var(--option-font-size, inherit));
+        font-weight: var(--create-option-font-weight, var(--option-font-weight, inherit));
+
+        &:hover,
+        &.is-active {
+            background: var(--create-option-bg-hover, #f3f4f6);
+        }
     }
 }
 </style>
