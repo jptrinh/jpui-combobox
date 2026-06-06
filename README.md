@@ -9,6 +9,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 - **ARIA-compliant** — `role="combobox"`, `aria-expanded`, `aria-activedescendant`, `aria-invalid`
 - **Floating dropdown** — powered by Floating UI with auto-flip and scroll-shift
 - **Clear button** — optional one-click reset
+- **Create option** — lets users create new values when no match is found
 - **Form integration** — registers with WeWeb form elements for validation and submission
 - **Workflow actions** — open, close, toggle, set value, reset, focus
 - **Local context** — exposes `value`, `label`, `selectedOption`, `isOpen`, `searchQuery`, and `options` to the formula editor
@@ -25,6 +26,8 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Init value | Text | Pre-selects an option on mount |
 | Placeholder | Text | Input placeholder (multi-language) |
 | Empty state text | Text | Message shown when no options match the search |
+| Allow create | On/Off | Show a "Create" option when no option exactly matches the typed query |
+| Create option label | Text | Label template for the create option — use `{query}` as a placeholder |
 | Clearable | On/Off | Show a × button when a value is selected |
 | Close on select | On/Off | Close the dropdown after picking an option |
 | Disabled | On/Off | Disable the entire combobox |
@@ -36,10 +39,11 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 
 The dropdown is fully customisable from the style panel, grouped into:
 
-- **Input** — placeholder color, icon color, icon size
+- **Input** — font size, font weight, placeholder color, icon color, icon size, icon button background and border radius (default and hover)
 - **Dropdown** — position, offset, width, max height, background, border, radius, padding, shadow, z-index
-- **Option** — text color, background, hover/selected variants, padding, border radius, checkmark color
+- **Option** — font size, font weight, text color, background, hover/selected variants, padding, border radius, checkmark color
 - **Empty state** — text color, padding
+- **Create option** — font size, font weight, text color, background, hover background
 
 ## Trigger events
 
@@ -49,8 +53,10 @@ The dropdown is fully customisable from the style panel, grouped into:
 | On init value change | `{ value }` | The bound init value changes |
 | On focus | — | Input receives focus |
 | On blur | — | Input loses focus |
+| On dropdown open | — | Dropdown opens |
 | On dropdown close | — | Dropdown closes |
 | On search | `{ value }` | User types in the input |
+| On create | `{ value }` | User confirms a new value via the create option |
 
 ## Workflow actions
 

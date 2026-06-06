@@ -6,7 +6,7 @@ export default {
             {
                 label: 'Input',
                 isCollapsible: true,
-                properties: ['inputFontSize', 'inputFontWeight', 'placeholderColor', 'iconColor', 'iconSize'],
+                properties: ['inputFontSize', 'inputFontWeight', 'placeholderColor', 'iconColor', 'iconSize', 'iconBtnBg', 'iconBtnBgHover', 'iconBtnBorderRadius', 'iconBtnBorderRadiusHover'],
             },
             {
                 label: 'Dropdown',
@@ -91,6 +91,7 @@ export default {
         { name: 'initValueChange', label: { en: 'On init value change' }, event: { value: '' } },
         { name: 'focus', label: { en: 'On focus' }, event: null },
         { name: 'blur', label: { en: 'On blur' }, event: null },
+        { name: 'dropdownOpen', label: { en: 'On dropdown open' }, event: null },
         { name: 'dropdownClose', label: { en: 'On dropdown close' }, event: null },
         { name: 'search', label: { en: 'On search' }, event: { value: '' } },
         { name: 'create', label: { en: 'On create' }, event: { value: '' } },
@@ -428,6 +429,7 @@ export default {
         placeholderColor: {
             label: { en: 'Placeholder color' },
             type: 'Color',
+            section: 'style',
             options: { nullable: true },
             bindable: true,
             responsive: true,
@@ -445,6 +447,7 @@ export default {
         iconColor: {
             label: { en: 'Icon color' },
             type: 'Color',
+            section: 'style',
             bindable: true,
             responsive: true,
             states: true,
@@ -461,6 +464,7 @@ export default {
         iconSize: {
             label: { en: 'Icon size' },
             type: 'Length',
+            section: 'style',
             options: {
                 unitChoices: [
                     { value: 'px', label: 'px', min: 8, max: 48 },
@@ -475,6 +479,86 @@ export default {
             bindingValidation: {
                 type: 'string',
                 tooltip: 'Size of the icons in the trigger.',
+            },
+            /* wwEditor:end */
+        },
+        iconBtnBg: {
+            label: { en: 'Icon button background' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            classes: true,
+            defaultValue: 'transparent',
+            /* wwEditor:start */
+            bindingValidation: {
+                cssSupports: 'color',
+                type: 'string',
+                tooltip: 'Default background color of the chevron and clear buttons.',
+            },
+            /* wwEditor:end */
+        },
+        iconBtnBgHover: {
+            label: { en: 'Icon button background (hover)' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            classes: true,
+            defaultValue: 'transparent',
+            /* wwEditor:start */
+            bindingValidation: {
+                cssSupports: 'color',
+                type: 'string',
+                tooltip: 'Background color of the chevron and clear buttons on hover.',
+            },
+            /* wwEditor:end */
+        },
+        iconBtnBorderRadius: {
+            label: { en: 'Icon button border radius' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 0, max: 100 },
+                    { value: '%', label: '%', min: 0, max: 50 },
+                    { value: 'em', label: 'em', min: 0, max: 5 },
+                ],
+                noRange: true,
+                useVar: true,
+            },
+            bindable: true,
+            responsive: true,
+            classes: true,
+            defaultValue: '4px',
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Default border radius of the chevron and clear buttons.',
+            },
+            /* wwEditor:end */
+        },
+        iconBtnBorderRadiusHover: {
+            label: { en: 'Icon button border radius (hover)' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 0, max: 100 },
+                    { value: '%', label: '%', min: 0, max: 50 },
+                    { value: 'em', label: 'em', min: 0, max: 5 },
+                ],
+                noRange: true,
+                useVar: true,
+            },
+            bindable: true,
+            responsive: true,
+            classes: true,
+            defaultValue: '4px',
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Border radius of the chevron and clear buttons on hover.',
             },
             /* wwEditor:end */
         },

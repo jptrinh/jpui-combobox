@@ -39,6 +39,8 @@
             tabindex="-1"
             @click.stop="clearValue"
             @mousedown.prevent
+            @mouseenter="handleClearBtnMouseEnter"
+            @mouseleave="handleClearBtnMouseLeave"
         >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -54,6 +56,8 @@
             tabindex="-1"
             @click.stop="toggleDropdown"
             @mousedown.prevent
+            @mouseenter="handleChevronMouseEnter"
+            @mouseleave="handleChevronMouseLeave"
         >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9" />
@@ -78,19 +82,19 @@
                             :id="`${dropdownId}-opt-${index}`"
                             class="combobox__option"
                             :class="{
-                                'is-selected': isOptionSelected(option),
+                                'is-selected': option.isSelected,
                                 'is-active': activeIndex === index,
                                 'is-disabled': option.disabled,
                             }"
                             role="option"
-                            :aria-selected="isOptionSelected(option)"
+                            :aria-selected="option.isSelected"
                             :aria-disabled="option.disabled || undefined"
                             @click="selectOption(option)"
                             @mouseenter="activeIndex = index"
                         >
                             <span class="combobox__option-check" aria-hidden="true">
                                 <svg
-                                    v-if="isOptionSelected(option)"
+                                    v-if="option.isSelected"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
@@ -132,6 +136,7 @@
         <!-- Hidden form input -->
         <input
             type="hidden"
+            tabindex="-1"
             class="combobox__fake-input"
             :name="fieldNameValue"
             :value="variableValue"
@@ -162,9 +167,8 @@ export default {
 
         const isEditing = computed(() => {
             /* wwEditor:start */
-            return props.wwEditorState?.isEditing ?? false;
+            if (props.wwEditorState?.isEditing) return true;
             /* wwEditor:end */
-            // eslint-disable-next-line no-unreachable
             return false;
         });
 
@@ -178,6 +182,8 @@ export default {
         const activeIndex = ref(-1);
         const inputText = ref('');
         const isTyping = ref(false);
+        const isChevronHovered = ref(false);
+        const isClearHovered = ref(false);
 
         const isOpenEffective = computed(() => {
             /* wwEditor:start */
@@ -186,7 +192,7 @@ export default {
             return isOpen.value;
         });
 
-        const appRoot = shallowRef(wwLib.getFrontDocument().querySelector('#app'));
+        const appRoot = computed(() => wwLib.getFrontDocument().querySelector('#app'));
         const dropdownId = `combobox-${props.uid}`;
 
         // ── Floating UI ───────────────────────────────────────────────────────
@@ -290,10 +296,16 @@ export default {
             /* wwEditor:start */
             if (props.content?.forceEmptyState) return [];
             /* wwEditor:end */
-            if (!isTyping.value) return processedOptions.value;
+            const val = variableValue.value;
+            const hasVal = val !== null && val !== undefined && val !== '';
+            const markSelected = o => ({
+                ...o,
+                isSelected: hasVal && (o.value === val || String(o.value) === String(val)),
+            });
+            if (!isTyping.value) return processedOptions.value.map(markSelected);
             const q = (inputText.value ?? '').toLowerCase().trim();
-            if (!q) return processedOptions.value;
-            return processedOptions.value.filter(o => o.label.toLowerCase().includes(q));
+            if (!q) return processedOptions.value.map(markSelected);
+            return processedOptions.value.filter(o => o.label.toLowerCase().includes(q)).map(markSelected);
         });
 
         // ── Computed state flags ───────────────────────────────────────────────
@@ -320,7 +332,7 @@ export default {
         });
 
         const activeDescendantId = computed(() => {
-            if (!isOpen.value || activeIndex.value < 0) return undefined;
+            if (!isOpenEffective.value || activeIndex.value < 0) return undefined;
             if (showCreateOption.value && activeIndex.value === filteredOptions.value.length) {
                 return `${dropdownId}-opt-create`;
             }
@@ -328,6 +340,22 @@ export default {
         });
 
         // ── Focus / state helpers ─────────────────────────────────────────────
+        function handleChevronMouseEnter() {
+            isChevronHovered.value = true;
+        }
+
+        function handleChevronMouseLeave() {
+            isChevronHovered.value = false;
+        }
+
+        function handleClearBtnMouseEnter() {
+            isClearHovered.value = true;
+        }
+
+        function handleClearBtnMouseLeave() {
+            isClearHovered.value = false;
+        }
+
         function setFocused(focused) {
             isReallyFocused.value = focused;
             if (focused) {
@@ -340,10 +368,16 @@ export default {
             }
         }
 
+        // ── Sync disabled / readonly / invalid WeWeb states ───────────────────
+        watch(isDisabled, val => { emit(val ? 'add-state' : 'remove-state', 'disabled'); }, { immediate: true });
+        watch(isReadonly, val => { emit(val ? 'add-state' : 'remove-state', 'readonly'); }, { immediate: true });
+        watch(isInvalid, val => { emit(val ? 'add-state' : 'remove-state', 'invalid'); }, { immediate: true });
+
         // ── Open / close ──────────────────────────────────────────────────────
         function openDropdown() {
             if (isDisabled.value || isReadonly.value || isEditing.value) return;
             isOpen.value = true;
+            emit('trigger-event', { name: 'dropdownOpen', event: null });
             // Pre-focus the currently selected option
             if (selectedOption.value) {
                 const idx = filteredOptions.value.findIndex(
@@ -532,6 +566,18 @@ export default {
             '--placeholder-color': props.content?.placeholderColor || '#9ca3af',
             '--icon-color': props.content?.iconColor || '#6b7280',
             '--icon-size': props.content?.iconSize || '16px',
+            '--chevron-btn-bg': isChevronHovered.value
+                ? (props.content?.iconBtnBgHover ?? props.content?.iconBtnBg ?? 'transparent')
+                : (props.content?.iconBtnBg ?? 'transparent'),
+            '--chevron-btn-border-radius': isChevronHovered.value
+                ? (props.content?.iconBtnBorderRadiusHover ?? props.content?.iconBtnBorderRadius ?? '4px')
+                : (props.content?.iconBtnBorderRadius ?? '4px'),
+            '--clear-btn-bg': isClearHovered.value
+                ? (props.content?.iconBtnBgHover ?? props.content?.iconBtnBg ?? 'transparent')
+                : (props.content?.iconBtnBg ?? 'transparent'),
+            '--clear-btn-border-radius': isClearHovered.value
+                ? (props.content?.iconBtnBorderRadiusHover ?? props.content?.iconBtnBorderRadius ?? '4px')
+                : (props.content?.iconBtnBorderRadius ?? '4px'),
             '--input-font-size': props.content?.inputFontSize || '16px',
             '--input-font-weight': props.content?.inputFontWeight || null,
         }));
@@ -669,6 +715,10 @@ context.local.data?.['combobox']?.['isOpen']
             selectOption,
             clearValue,
             toggleDropdown,
+            handleChevronMouseEnter,
+            handleChevronMouseLeave,
+            handleClearBtnMouseEnter,
+            handleClearBtnMouseLeave,
             actionOpenDropdown,
             actionCloseDropdown,
             actionToggleDropdown,
@@ -734,11 +784,11 @@ context.local.data?.['combobox']?.['isOpen']
         width: 28px;
         height: 100%;
         border: none;
-        background: transparent;
         cursor: pointer;
         color: var(--icon-color, #6b7280);
         padding: 0;
         margin: 0;
+        transition: background 0.2s ease;
 
         svg {
             width: var(--icon-size, 16px);
@@ -747,7 +797,15 @@ context.local.data?.['combobox']?.['isOpen']
         }
     }
 
+    &__clear-btn {
+        background: var(--clear-btn-bg, transparent);
+        border-radius: var(--clear-btn-border-radius, 4px);
+    }
+
     &__chevron-btn {
+        background: var(--chevron-btn-bg, transparent);
+        border-radius: var(--chevron-btn-border-radius, 4px);
+
         svg {
             transition: transform 0.15s ease;
         }
@@ -763,7 +821,6 @@ context.local.data?.['combobox']?.['isOpen']
         height: 0;
         opacity: 0;
         pointer-events: none;
-        tabindex: -1;
     }
 }
 
