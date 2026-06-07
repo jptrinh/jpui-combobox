@@ -92,6 +92,7 @@
                             @click="selectOption(option)"
                             @mouseenter="activeIndex = index"
                         >
+                            <span class="combobox__option-label">{{ option.label }}</span>
                             <span class="combobox__option-check" aria-hidden="true">
                                 <svg
                                     v-if="option.isSelected"
@@ -105,7 +106,6 @@
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
                             </span>
-                            <span class="combobox__option-label">{{ option.label }}</span>
                         </div>
                     </template>
                     <div v-else-if="!showCreateOption" class="combobox__empty">
@@ -569,15 +569,11 @@ export default {
             '--chevron-btn-bg': isChevronHovered.value
                 ? (props.content?.iconBtnBgHover ?? props.content?.iconBtnBg ?? 'transparent')
                 : (props.content?.iconBtnBg ?? 'transparent'),
-            '--chevron-btn-border-radius': isChevronHovered.value
-                ? (props.content?.iconBtnBorderRadiusHover ?? props.content?.iconBtnBorderRadius ?? '4px')
-                : (props.content?.iconBtnBorderRadius ?? '4px'),
+            '--chevron-btn-border-radius': props.content?.iconBtnBorderRadius ?? '4px',
             '--clear-btn-bg': isClearHovered.value
                 ? (props.content?.iconBtnBgHover ?? props.content?.iconBtnBg ?? 'transparent')
                 : (props.content?.iconBtnBg ?? 'transparent'),
-            '--clear-btn-border-radius': isClearHovered.value
-                ? (props.content?.iconBtnBorderRadiusHover ?? props.content?.iconBtnBorderRadius ?? '4px')
-                : (props.content?.iconBtnBorderRadius ?? '4px'),
+            '--clear-btn-border-radius': props.content?.iconBtnBorderRadius ?? '4px',
             '--input-font-size': props.content?.inputFontSize || '16px',
             '--input-font-weight': props.content?.inputFontWeight || null,
         }));
@@ -788,7 +784,7 @@ context.local.data?.['combobox']?.['isOpen']
         color: var(--icon-color, #6b7280);
         padding: 0;
         margin: 0;
-        transition: background 0.2s ease;
+        transition: background 0.21s ease;
 
         svg {
             width: var(--icon-size, 16px);

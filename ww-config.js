@@ -6,7 +6,7 @@ export default {
             {
                 label: 'Input',
                 isCollapsible: true,
-                properties: ['inputFontSize', 'inputFontWeight', 'placeholderColor', 'iconColor', 'iconSize', 'iconBtnBg', 'iconBtnBgHover', 'iconBtnBorderRadius', 'iconBtnBorderRadiusHover'],
+                properties: ['inputFontSize', 'inputFontWeight', 'placeholderColor', 'iconColor', 'iconSize', 'iconBtnBg', 'iconBtnBgHover', 'iconBtnBorderRadius'],
             },
             {
                 label: 'Dropdown',
@@ -538,31 +538,6 @@ export default {
             },
             /* wwEditor:end */
         },
-        iconBtnBorderRadiusHover: {
-            label: { en: 'Icon button border radius (hover)' },
-            type: 'Length',
-            section: 'style',
-            options: {
-                unitChoices: [
-                    { value: 'px', label: 'px', min: 0, max: 100 },
-                    { value: '%', label: '%', min: 0, max: 50 },
-                    { value: 'em', label: 'em', min: 0, max: 5 },
-                ],
-                noRange: true,
-                useVar: true,
-            },
-            bindable: true,
-            responsive: true,
-            classes: true,
-            defaultValue: '4px',
-            /* wwEditor:start */
-            bindingValidation: {
-                type: 'string',
-                tooltip: 'Border radius of the chevron and clear buttons on hover.',
-            },
-            /* wwEditor:end */
-        },
-
         // ── STYLE: DROPDOWN POSITIONING ───────────────────────────────────────
         side: {
             label: { en: 'Position' },
