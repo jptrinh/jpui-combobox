@@ -1042,7 +1042,10 @@ export default {
             type: 'Length',
             section: 'style',
             options: {
-                unitChoices: [{ value: 'px', label: 'px', min: 0, max: 32 }],
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 0, max: 32 },
+                    { value: 'rem', label: 'rem', min: 0, max: 2 },
+                ],
                 noRange: true,
             },
             bindable: true,
