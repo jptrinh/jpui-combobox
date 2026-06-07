@@ -343,7 +343,8 @@ export default {
             newVal => {
                 setValue(newVal ?? null);
                 emit('trigger-event', { name: 'initValueChange', event: { value: newVal } });
-            }
+            },
+            { immediate: true }
         );
 
         // ── Derived state ──────────────────────────────────────────────────────
