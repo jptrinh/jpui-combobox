@@ -50,6 +50,7 @@
 
         <!-- Chevron button -->
         <button
+            v-if="!(isClearable && hasValue)"
             class="combobox__chevron-btn"
             :class="{ 'is-open': isOpenEffective }"
             type="button"
