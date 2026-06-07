@@ -1039,7 +1039,7 @@ export default {
         },
         chipGap: {
             label: { en: 'Gap' },
-            type: 'Length',
+            type: 'Spacing',
             section: 'style',
             options: {
                 unitChoices: [
