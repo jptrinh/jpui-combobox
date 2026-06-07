@@ -206,7 +206,7 @@ export default {
             bindingValidation: {
                 validations: [{ type: 'string' }, { type: 'number' }, { type: 'array' }],
                 tooltip:
-                    'The initial value matching one of the option values. When Multiple is enabled, provide an array of values.',
+                    "The initial value matching one of the option values. Single select example: 'apple'. Multiple select example: ['apple', 'banana'] (provide an array of values).",
             },
             /* wwEditor:end */
         },
@@ -366,12 +366,14 @@ export default {
             type: 'OnOff',
             section: 'settings',
             defaultValue: false,
+            bindable: true,
         },
         forceEmptyState: {
             label: { en: 'Force empty state (editor)' },
             type: 'OnOff',
             section: 'settings',
             defaultValue: false,
+            bindable: true,
         },
         /* wwEditor:end */
 

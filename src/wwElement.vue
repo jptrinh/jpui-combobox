@@ -995,8 +995,8 @@ context.local.data?.['combobox']?.['isOpen']
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 100%;
+        width: 24px;
+        height: 24px;
         border: none;
         cursor: pointer;
         color: var(--icon-color, #6b7280);
