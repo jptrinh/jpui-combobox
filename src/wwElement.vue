@@ -702,6 +702,7 @@ export default {
             '--chip-border-radius': props.content?.chipBorderRadius || '4px',
             '--chip-padding': props.content?.chipPadding || '2px 6px',
             '--chip-gap': props.content?.chipGap || '4px',
+            '--chip-content-gap': props.content?.chipContentGap || '4px',
             '--chip-remove-color': props.content?.chipRemoveIconColor || '#6b7280',
             '--chip-remove-color-hover': props.content?.chipRemoveIconColorHover || '#111827',
             '--chip-remove-icon-size': props.content?.chipRemoveIconSize || '14px',
@@ -944,7 +945,7 @@ context.local.data?.['combobox']?.['isOpen']
         flex-shrink: 0;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        gap: var(--chip-content-gap, 4px);
         max-width: 100%;
         height: var(--chip-height, auto);
         background: var(--chip-bg, #f3f4f6);
@@ -986,7 +987,6 @@ context.local.data?.['combobox']?.['isOpen']
 
         &:hover {
             color: var(--chip-remove-color-hover, #111827);
-            background: rgba(0, 0, 0, 0.06);
         }
 
         &:disabled {
@@ -1074,15 +1074,17 @@ context.local.data?.['combobox']?.['isOpen']
         user-select: none;
         transition: background 0.1s ease, color 0.1s ease;
 
-        &:hover,
-        &.is-active {
-            background: var(--option-bg-hover, #f3f4f6);
-            color: var(--option-color-hover, inherit);
-        }
-
         &.is-selected {
             background: var(--option-bg-selected, #f3f4f6);
             color: var(--option-color-selected, inherit);
+        }
+
+        &:hover,
+        &.is-active,
+        &.is-selected:hover,
+        &.is-selected.is-active {
+            background: var(--option-bg-hover, #f3f4f6);
+            color: var(--option-color-hover, inherit);
         }
 
         &.is-disabled {

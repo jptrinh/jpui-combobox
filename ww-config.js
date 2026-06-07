@@ -59,6 +59,7 @@ export default {
                     'chipBorderRadius',
                     'chipPadding',
                     'chipGap',
+                    'chipContentGap',
                     'chipRemoveIconColor',
                     'chipRemoveIconColorHover',
                     'chipRemoveIconSize',
@@ -1133,6 +1134,29 @@ export default {
             bindingValidation: {
                 type: 'string',
                 tooltip: 'Size of the remove (x) icon button in chips.',
+            },
+            /* wwEditor:end */
+        },
+        chipContentGap: {
+            label: { en: 'Label / icon gap' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 0, max: 32 },
+                    { value: 'rem', label: 'rem', min: 0, max: 2 },
+                ],
+                noRange: true,
+                useVar: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '4px',
+            hidden: content => !content?.multiple,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Gap between the chip label and the remove (x) icon.',
             },
             /* wwEditor:end */
         },
