@@ -44,7 +44,7 @@
                 :value="inputText"
                 @input="handleInput"
                 @focus="handleFocus"
-                @blur="handleInputBlur"
+                @blur="handleBlur"
                 @click="handleInputClick"
             />
         </div>
@@ -67,7 +67,7 @@
             :value="inputText"
             @input="handleInput"
             @focus="handleFocus"
-            @blur="handleInputBlur"
+            @blur="handleBlur"
             @click="handleInputClick"
         />
 
@@ -76,8 +76,12 @@
             v-if="isClearable && hasValue"
             class="combobox__clear-btn"
             type="button"
-            tabindex="-1"
+            tabindex="0"
             @click.stop="clearValue"
+            @keydown.enter.prevent.stop="clearValue"
+            @keydown.space.prevent.stop="clearValue"
+            @focus="handleFocus"
+            @blur="handleBlur"
             @mousedown.prevent
             @mouseenter="handleClearBtnMouseEnter"
             @mouseleave="handleClearBtnMouseLeave"
@@ -94,8 +98,11 @@
             class="combobox__chevron-btn"
             :class="{ 'is-open': isOpenEffective }"
             type="button"
-            tabindex="-1"
+            tabindex="0"
             @click.stop="toggleDropdown"
+            @keydown="handleChevronKeydown"
+            @focus="handleFocus"
+            @blur="handleBlur"
             @mousedown.prevent
             @mouseenter="handleChevronMouseEnter"
             @mouseleave="handleChevronMouseLeave"
@@ -502,8 +509,11 @@ export default {
         function handleInput(event) {
             inputText.value = event.target.value;
             isTyping.value = true;
-            activeIndex.value = filteredOptions.value.length > 0 ? 0 : -1;
+            // Open first — openDropdown() sets its own activeIndex (pre-focused
+            // selection or -1), so it must run before we highlight the first match
+            // or it would clobber it.
             if (!isOpen.value) openDropdown();
+            activeIndex.value = filteredOptions.value.length > 0 ? 0 : -1;
             emit('trigger-event', { name: 'search', event: { value: event.target.value } });
         }
 
@@ -513,12 +523,34 @@ export default {
 
         function handleFocus() {
             isFocusVisible.value = true;
+            const wasFocused = isReallyFocused.value;
             setFocused(true);
-            if (!isOpen.value) openDropdown();
-            emit('trigger-event', { name: 'focus', event: null });
+            if (!wasFocused) {
+                emit('trigger-event', { name: 'focus', event: null });
+            }
         }
 
-        function handleInputBlur() {
+        function handleChevronKeydown(event) {
+            // Down arrow / Enter: hand off to the input — focus it, open the
+            // dropdown and highlight the first option, ready for navigation.
+            if (event.key === 'ArrowDown' || event.key === 'Enter') {
+                event.preventDefault();
+                event.stopPropagation();
+                inputRef.value?.focus();
+                if (!isOpen.value) openDropdown();
+                highlightFirstOption();
+                return;
+            }
+            // Space: only intercept to open the dropdown when it's closed —
+            // when open, let it bubble so native button activation (toggle) applies.
+            if ((event.key === ' ' || event.key === 'Spacebar') && !isOpen.value) {
+                event.preventDefault();
+                event.stopPropagation();
+                openDropdown();
+            }
+        }
+
+        function handleBlur() {
             setTimeout(() => {
                 const doc = wwLib.getFrontDocument();
                 const focused = doc.activeElement;
@@ -593,12 +625,21 @@ export default {
         }
 
         // ── Keyboard navigation ───────────────────────────────────────────────
+        function highlightFirstOption() {
+            activeIndex.value = filteredOptions.value.length > 0 ? 0 : -1;
+            scrollActiveOptionIntoView();
+        }
+
         function handleKeydown(event) {
             if (isDisabled.value || isReadonly.value) return;
             switch (event.key) {
                 case 'ArrowDown':
                     event.preventDefault();
-                    if (!isOpen.value) { openDropdown(); return; }
+                    if (!isOpen.value) {
+                        openDropdown();
+                        highlightFirstOption();
+                        return;
+                    }
                     activeIndex.value = Math.min(
                         activeIndex.value + 1,
                         filteredOptions.value.length - 1 + (showCreateOption.value ? 1 : 0)
@@ -857,7 +898,8 @@ context.local.data?.['combobox']?.['isOpen']
             handleInput,
             handleInputClick,
             handleFocus,
-            handleInputBlur,
+            handleBlur,
+            handleChevronKeydown,
             handleKeydown,
             selectOption,
             clearValue,
