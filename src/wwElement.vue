@@ -502,7 +502,7 @@ export default {
         function handleInput(event) {
             inputText.value = event.target.value;
             isTyping.value = true;
-            activeIndex.value = -1;
+            activeIndex.value = filteredOptions.value.length > 0 ? 0 : -1;
             if (!isOpen.value) openDropdown();
             emit('trigger-event', { name: 'search', event: { value: event.target.value } });
         }
