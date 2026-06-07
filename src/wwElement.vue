@@ -720,6 +720,7 @@ export default {
             '--option-padding': props.content?.optionPadding || '6px 8px',
             '--option-radius': props.content?.optionBorderRadius || '4px',
             '--option-check-color': props.content?.optionCheckmarkColor || '#111827',
+            '--empty-font-size': props.content?.emptyStateFontSize || '14px',
             '--empty-color': props.content?.emptyStateFontColor || '#6b7280',
             '--empty-padding': props.content?.emptyStatePadding || '8px 12px',
             '--create-option-color': props.content?.createOptionFontColor || '#111827',
@@ -1113,7 +1114,7 @@ context.local.data?.['combobox']?.['isOpen']
         padding: var(--empty-padding, 8px 12px);
         color: var(--empty-color, #6b7280);
         text-align: center;
-        font-size: 0.875em;
+        font-size: var(--empty-font-size, 14px);
     }
 
     .combobox__create-option {

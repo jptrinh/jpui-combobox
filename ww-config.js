@@ -45,7 +45,7 @@ export default {
             {
                 label: 'Empty state',
                 isCollapsible: true,
-                properties: ['emptyStateFontColor', 'emptyStatePadding'],
+                properties: ['emptyStateFontSize', 'emptyStateFontColor', 'emptyStatePadding'],
             },
             {
                 label: 'Chips',
@@ -862,6 +862,22 @@ export default {
         },
 
         // ── STYLE: EMPTY STATE ────────────────────────────────────────────────
+        emptyStateFontSize: {
+            label: { en: 'Font size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 8, max: 72 },
+                    { value: 'rem', label: 'rem', min: 0.5, max: 4 },
+                    { value: 'em', label: 'em', min: 0.5, max: 4 },
+                ],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '14px',
+        },
         emptyStateFontColor: {
             label: { en: 'Text color' },
             type: 'Color',
