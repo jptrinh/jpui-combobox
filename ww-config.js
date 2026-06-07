@@ -48,6 +48,20 @@ export default {
                 properties: ['emptyStateFontColor', 'emptyStatePadding'],
             },
             {
+                label: 'Chips',
+                isCollapsible: true,
+                properties: [
+                    'chipBgColor',
+                    'chipTextColor',
+                    'chipFontSize',
+                    'chipBorderRadius',
+                    'chipPadding',
+                    'chipGap',
+                    'chipRemoveIconColor',
+                    'chipRemoveIconColorHover',
+                ],
+            },
+            {
                 label: 'Create option',
                 isCollapsible: true,
                 properties: ['createOptionFontSize', 'createOptionFontWeight', 'createOptionFontColor', 'createOptionBgColor', 'createOptionBgColorHover'],
@@ -63,6 +77,7 @@ export default {
                 label: 'Behavior',
                 isCollapsible: true,
                 properties: [
+                    'multiple',
                     'placeholder',
                     'emptyStateText',
                     'allowCreate',
@@ -95,6 +110,7 @@ export default {
         { name: 'dropdownClose', label: { en: 'On dropdown close' }, event: null },
         { name: 'search', label: { en: 'On search' }, event: { value: '' } },
         { name: 'create', label: { en: 'On create' }, event: { value: '' } },
+        { name: 'chipRemove', label: { en: 'On chip remove' }, event: { value: '' } },
     ],
     actions: [
         { label: 'Open', action: 'actionOpenDropdown', args: [] },
@@ -188,13 +204,27 @@ export default {
             defaultValue: null,
             /* wwEditor:start */
             bindingValidation: {
-                validations: [{ type: 'string' }, { type: 'number' }],
-                tooltip: 'The initial value matching one of the option values.',
+                validations: [{ type: 'string' }, { type: 'number' }, { type: 'array' }],
+                tooltip:
+                    'The initial value matching one of the option values. When Multiple is enabled, provide an array of values.',
             },
             /* wwEditor:end */
         },
 
         // ── BEHAVIOR ──────────────────────────────────────────────────────────
+        multiple: {
+            label: { en: 'Multiple' },
+            type: 'OnOff',
+            section: 'settings',
+            defaultValue: false,
+            bindable: true,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'boolean',
+                tooltip: 'Allow selecting multiple options, displayed as removable chips.',
+            },
+            /* wwEditor:end */
+        },
         placeholder: {
             label: { en: 'Placeholder' },
             type: 'Text',
@@ -270,6 +300,7 @@ export default {
             section: 'settings',
             defaultValue: true,
             bindable: true,
+            hidden: content => content?.multiple,
             /* wwEditor:start */
             bindingValidation: {
                 type: 'boolean',
@@ -921,6 +952,103 @@ export default {
             bindable: true,
             responsive: true,
             defaultValue: '#f3f4f6',
+        },
+
+        // ── STYLE: CHIPS (multiple mode) ──────────────────────────────────────
+        chipBgColor: {
+            label: { en: 'Background' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            defaultValue: '#f3f4f6',
+            hidden: content => !content?.multiple,
+        },
+        chipTextColor: {
+            label: { en: 'Text color' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            defaultValue: '#111827',
+            hidden: content => !content?.multiple,
+        },
+        chipFontSize: {
+            label: { en: 'Font size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 8, max: 48 },
+                    { value: 'em', label: 'em', min: 0.5, max: 3 },
+                ],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '14px',
+            hidden: content => !content?.multiple,
+        },
+        chipBorderRadius: {
+            label: { en: 'Border radius' },
+            type: 'Spacing',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 0, max: 48 },
+                    { value: '%', label: '%', min: 0, max: 50 },
+                ],
+                isCorner: true,
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '4px',
+            hidden: content => !content?.multiple,
+        },
+        chipPadding: {
+            label: { en: 'Padding' },
+            type: 'Spacing',
+            section: 'style',
+            options: {
+                unitChoices: [{ value: 'px', label: 'px', min: 0, max: 32 }],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '2px 6px',
+            hidden: content => !content?.multiple,
+        },
+        chipGap: {
+            label: { en: 'Gap' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [{ value: 'px', label: 'px', min: 0, max: 32 }],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '4px',
+            hidden: content => !content?.multiple,
+        },
+        chipRemoveIconColor: {
+            label: { en: 'Remove icon color' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            defaultValue: '#6b7280',
+            hidden: content => !content?.multiple,
+        },
+        chipRemoveIconColorHover: {
+            label: { en: 'Remove icon color (hover)' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            defaultValue: '#111827',
+            hidden: content => !content?.multiple,
         },
     },
 };

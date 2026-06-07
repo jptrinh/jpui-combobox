@@ -10,8 +10,48 @@
         :style="triggerCssVars"
         @keydown="handleKeydown"
     >
-        <!-- Search input -->
+        <!-- Field: chips (multiple) + search input -->
+        <div v-if="isMultiple" class="combobox__field">
+            <span v-for="option in selectedOptions" :key="option._uid" class="combobox__chip">
+                <span class="combobox__chip-label">{{ option.label }}</span>
+                <button
+                    type="button"
+                    class="combobox__chip-remove"
+                    tabindex="-1"
+                    :disabled="isDisabled || isReadonly"
+                    @click.stop="removeChip(option)"
+                    @mousedown.prevent
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </span>
+            <input
+                ref="inputRef"
+                class="combobox__input combobox__input--multi"
+                type="text"
+                autocomplete="off"
+                role="combobox"
+                :aria-expanded="isOpenEffective"
+                :aria-haspopup="'listbox'"
+                :aria-activedescendant="activeDescendantId"
+                :aria-invalid="isInvalid || undefined"
+                :disabled="isDisabled"
+                :readonly="isReadonly"
+                :placeholder="selectedOptions.length ? '' : placeholderText"
+                :value="inputText"
+                @input="handleInput"
+                @focus="handleFocus"
+                @blur="handleInputBlur"
+                @click="handleInputClick"
+            />
+        </div>
+
+        <!-- Search input (single) -->
         <input
+            v-else
             ref="inputRef"
             class="combobox__input"
             type="text"
@@ -134,8 +174,31 @@
             </div>
         </teleport>
 
-        <!-- Hidden form input -->
+        <!-- Hidden form input(s) -->
+        <template v-if="isMultiple">
+            <input
+                v-for="(val, index) in (Array.isArray(variableValue) ? variableValue : [])"
+                :key="`fake-input-${index}`"
+                type="hidden"
+                tabindex="-1"
+                class="combobox__fake-input"
+                :name="fieldNameValue"
+                :value="val"
+                :disabled="isDisabled"
+            />
+            <input
+                v-if="!hasValue"
+                type="hidden"
+                tabindex="-1"
+                class="combobox__fake-input"
+                :name="fieldNameValue"
+                value=""
+                :required="content?.required"
+                :disabled="isDisabled"
+            />
+        </template>
         <input
+            v-else
             type="hidden"
             tabindex="-1"
             class="combobox__fake-input"
@@ -250,8 +313,16 @@ export default {
             })
         );
 
+        // ── Multiple selection ────────────────────────────────────────────────
+        const isMultiple = computed(() => props.content?.multiple || false);
+
         // ── Internal variable ─────────────────────────────────────────────────
-        const initValue = computed(() => props.content?.initValue ?? null);
+        const initValue = computed(() => {
+            const raw = props.content?.initValue ?? null;
+            if (!isMultiple.value) return Array.isArray(raw) ? (raw[0] ?? null) : raw;
+            if (Array.isArray(raw)) return raw;
+            return raw === null || raw === undefined || raw === '' ? [] : [raw];
+        });
 
         const { value: variableValue, setValue } = wwLib.wwVariable.useComponentVariable({
             uid: props.uid,
@@ -279,16 +350,30 @@ export default {
             );
         });
 
-        const selectedLabel = computed(() => selectedOption.value?.label ?? '');
-        const hasValue = computed(
-            () => variableValue.value !== null && variableValue.value !== undefined && variableValue.value !== ''
-        );
+        const selectedOptions = computed(() => {
+            if (!isMultiple.value) return [];
+            const val = variableValue.value;
+            const arr = Array.isArray(val) ? val : [];
+            const optionsByValue = new Map(processedOptions.value.map(o => [String(o.value), o]));
+            return arr.map(v => optionsByValue.get(String(v))).filter(Boolean);
+        });
+
+        const selectedLabel = computed(() => {
+            if (isMultiple.value) return selectedOptions.value.map(o => o.label).join(', ');
+            return selectedOption.value?.label ?? '';
+        });
+
+        const hasValue = computed(() => {
+            if (isMultiple.value) return Array.isArray(variableValue.value) && variableValue.value.length > 0;
+            return variableValue.value !== null && variableValue.value !== undefined && variableValue.value !== '';
+        });
 
         // Sync inputText ← selectedLabel when not actively typing
         watch(
-            [selectedLabel, isTyping],
-            ([label, typing]) => {
-                if (!typing) inputText.value = label;
+            [selectedLabel, isTyping, isMultiple],
+            ([label, typing, multiple]) => {
+                if (typing) return;
+                inputText.value = multiple ? '' : label;
             },
             { immediate: true }
         );
@@ -298,11 +383,18 @@ export default {
             if (props.content?.forceEmptyState) return [];
             /* wwEditor:end */
             const val = variableValue.value;
-            const hasVal = val !== null && val !== undefined && val !== '';
-            const markSelected = o => ({
-                ...o,
-                isSelected: hasVal && (o.value === val || String(o.value) === String(val)),
-            });
+            const markSelected = isMultiple.value
+                ? (() => {
+                      const selectedSet = new Set((Array.isArray(val) ? val : []).map(String));
+                      return o => ({ ...o, isSelected: selectedSet.has(String(o.value)) });
+                  })()
+                : (() => {
+                      const hasVal = val !== null && val !== undefined && val !== '';
+                      return o => ({
+                          ...o,
+                          isSelected: hasVal && (o.value === val || String(o.value) === String(val)),
+                      });
+                  })();
             if (!isTyping.value) return processedOptions.value.map(markSelected);
             const q = (inputText.value ?? '').toLowerCase().trim();
             if (!q) return processedOptions.value.map(markSelected);
@@ -314,7 +406,7 @@ export default {
         const isReadonly = computed(() => props.content?.readonly || false);
         const isInvalid = computed(() => props.content?.invalid || false);
         const isClearable = computed(() => props.content?.clearable !== false);
-        const closeOnSelect = computed(() => props.content?.closeOnSelect !== false);
+        const closeOnSelect = computed(() => !isMultiple.value && props.content?.closeOnSelect !== false);
         const placeholderText = computed(() => wwLib.wwLang?.getText(props.content?.placeholder) || '');
         const emptyText = computed(() => wwLib.wwLang?.getText(props.content?.emptyStateText) || 'No results found.');
 
@@ -379,8 +471,8 @@ export default {
             if (isDisabled.value || isReadonly.value || isEditing.value) return;
             isOpen.value = true;
             emit('trigger-event', { name: 'dropdownOpen', event: null });
-            // Pre-focus the currently selected option
-            if (selectedOption.value) {
+            // Pre-focus the currently selected option (single mode only)
+            if (!isMultiple.value && selectedOption.value) {
                 const idx = filteredOptions.value.findIndex(
                     o => o.value === selectedOption.value.value
                 );
@@ -394,7 +486,7 @@ export default {
             if (!isOpen.value) return;
             isOpen.value = false;
             isTyping.value = false;
-            inputText.value = selectedLabel.value;
+            inputText.value = isMultiple.value ? '' : selectedLabel.value;
             activeIndex.value = -1;
             if (!opts.silent) {
                 emit('trigger-event', { name: 'dropdownClose', event: null });
@@ -443,6 +535,20 @@ export default {
         // ── Selection ─────────────────────────────────────────────────────────
         function selectOption(option) {
             if (option.disabled) return;
+
+            if (isMultiple.value) {
+                const current = Array.isArray(variableValue.value) ? [...variableValue.value] : [];
+                const idx = current.findIndex(v => v === option.value || String(v) === String(option.value));
+                const next = idx >= 0 ? current.filter((_, i) => i !== idx) : [...current, option.value];
+                setValue(next);
+                inputText.value = '';
+                isTyping.value = false;
+                activeIndex.value = -1;
+                emit('trigger-event', { name: 'change', event: { value: next } });
+                nextTick(() => inputRef.value?.focus());
+                return;
+            }
+
             const prev = variableValue.value;
             setValue(option.value);
             inputText.value = option.label;
@@ -457,14 +563,25 @@ export default {
         }
 
         function clearValue() {
-            setValue(null);
+            const next = isMultiple.value ? [] : null;
+            setValue(next);
             inputText.value = '';
             isTyping.value = false;
-            emit('trigger-event', { name: 'change', event: { value: null } });
+            emit('trigger-event', { name: 'change', event: { value: next } });
             nextTick(() => {
                 inputRef.value?.focus();
                 openDropdown();
             });
+        }
+
+        function removeChip(option) {
+            if (isDisabled.value || isReadonly.value) return;
+            const current = Array.isArray(variableValue.value) ? [...variableValue.value] : [];
+            const next = current.filter(v => !(v === option.value || String(v) === String(option.value)));
+            setValue(next);
+            emit('trigger-event', { name: 'change', event: { value: next } });
+            emit('trigger-event', { name: 'chipRemove', event: { value: option.value } });
+            nextTick(() => inputRef.value?.focus());
         }
 
         function selectCreateOption() {
@@ -473,12 +590,6 @@ export default {
             emit('trigger-event', { name: 'create', event: { value: q } });
             closeDropdown();
             nextTick(() => inputRef.value?.focus());
-        }
-
-        function isOptionSelected(option) {
-            const val = variableValue.value;
-            if (val === null || val === undefined || val === '') return false;
-            return option.value === val || String(option.value) === String(val);
         }
 
         // ── Keyboard navigation ───────────────────────────────────────────────
@@ -509,6 +620,12 @@ export default {
                             const opt = filteredOptions.value[activeIndex.value];
                             if (opt) selectOption(opt);
                         }
+                    }
+                    break;
+                case 'Backspace':
+                    if (isMultiple.value && !inputText.value && selectedOptions.value.length) {
+                        event.preventDefault();
+                        removeChip(selectedOptions.value[selectedOptions.value.length - 1]);
                     }
                     break;
                 case 'Escape':
@@ -577,6 +694,14 @@ export default {
             '--clear-btn-border-radius': props.content?.iconBtnBorderRadius ?? '4px',
             '--input-font-size': props.content?.inputFontSize || '16px',
             '--input-font-weight': props.content?.inputFontWeight || null,
+            '--chip-bg': props.content?.chipBgColor || '#f3f4f6',
+            '--chip-color': props.content?.chipTextColor || '#111827',
+            '--chip-font-size': props.content?.chipFontSize || null,
+            '--chip-border-radius': props.content?.chipBorderRadius || '4px',
+            '--chip-padding': props.content?.chipPadding || '2px 6px',
+            '--chip-gap': props.content?.chipGap || '4px',
+            '--chip-remove-color': props.content?.chipRemoveIconColor || '#6b7280',
+            '--chip-remove-color-hover': props.content?.chipRemoveIconColorHover || '#111827',
         }));
 
         const dropdownCssVars = computed(() => ({
@@ -612,6 +737,9 @@ export default {
                 ? { value: selectedOption.value.value, label: selectedOption.value.label }
                 : null
         );
+        const localSelectedOptions = computed(() =>
+            selectedOptions.value.map(o => ({ value: o.value, label: o.label }))
+        );
         const localSearchQuery = computed(() => (isTyping.value ? inputText.value : ''));
         const localOptions = computed(() => processedOptions.value.map(({ _uid, ...o }) => o));
 
@@ -619,6 +747,8 @@ export default {
             value: variableValue,
             label: selectedLabel,
             selectedOption: localSelectedOption,
+            selectedOptions: localSelectedOptions,
+            multiple: isMultiple,
             isOpen,
             searchQuery: localSearchQuery,
             options: localOptions,
@@ -627,13 +757,19 @@ export default {
         const localMarkdown = `### Combobox local information
 
 #### value
-The currently selected value.
+The currently selected value (or array of values when Multiple is enabled).
 
 #### label
-The display label of the currently selected option.
+The display label of the currently selected option (or comma-joined labels when Multiple is enabled).
 
 #### selectedOption
-The full selected option \`{ value, label }\`, or \`null\` if nothing is selected.
+The full selected option \`{ value, label }\`, or \`null\` if nothing is selected. Always \`null\` in multiple mode — use \`selectedOptions\` instead.
+
+#### selectedOptions
+Array of selected options \`[{ value, label }]\`. Always empty when Multiple is disabled — use \`selectedOption\` instead.
+
+#### multiple
+Boolean indicating whether multiple selection is enabled.
 
 #### isOpen
 Boolean indicating whether the dropdown is open.
@@ -647,7 +783,7 @@ Array of all available options \`[{ value, label, disabled }]\`.
 **Usage Example:**
 \`\`\`
 context.local.data?.['combobox']?.['value']
-context.local.data?.['combobox']?.['label']
+context.local.data?.['combobox']?.['selectedOptions']
 context.local.data?.['combobox']?.['isOpen']
 \`\`\`
 `;
@@ -660,6 +796,14 @@ context.local.data?.['combobox']?.['isOpen']
         function actionToggleDropdown() { toggleDropdown(); }
 
         function actionSetValue(val) {
+            if (isMultiple.value) {
+                const next = Array.isArray(val) ? val : val === null || val === undefined || val === '' ? [] : [val];
+                setValue(next);
+                isTyping.value = false;
+                inputText.value = '';
+                emit('trigger-event', { name: 'change', event: { value: next } });
+                return;
+            }
             const option = processedOptions.value.find(
                 o => o.value === val || String(o.value) === String(val)
             );
@@ -686,6 +830,8 @@ context.local.data?.['combobox']?.['isOpen']
             isReadonly,
             isInvalid,
             isClearable,
+            isMultiple,
+            selectedOptions,
             hasValue,
             inputText,
             activeIndex,
@@ -698,7 +844,6 @@ context.local.data?.['combobox']?.['isOpen']
             variableValue,
             fieldNameValue,
             appRoot,
-            isOptionSelected,
             showCreateOption,
             createOptionText,
             selectCreateOption,
@@ -711,6 +856,7 @@ context.local.data?.['combobox']?.['isOpen']
             handleKeydown,
             selectOption,
             clearValue,
+            removeChip,
             toggleDropdown,
             handleChevronMouseEnter,
             handleChevronMouseLeave,
@@ -769,6 +915,77 @@ context.local.data?.['combobox']?.['isOpen']
 
         &:disabled {
             cursor: not-allowed;
+        }
+
+        &--multi {
+            flex: 1 1 60px;
+            min-width: 60px;
+            height: auto;
+            align-self: stretch;
+        }
+    }
+
+    &__field {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        align-content: center;
+        gap: var(--chip-gap, 4px);
+        padding: 3px 0;
+    }
+
+    &__chip {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        max-width: 100%;
+        background: var(--chip-bg, #f3f4f6);
+        color: var(--chip-color, #111827);
+        border-radius: var(--chip-border-radius, 4px);
+        padding: var(--chip-padding, 2px 6px);
+        font-size: var(--chip-font-size, 0.875em);
+        line-height: 1.4;
+    }
+
+    &__chip-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__chip-remove {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border: none;
+        border-radius: 2px;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+        color: var(--chip-remove-color, #6b7280);
+        transition: color 0.15s ease, background 0.15s ease;
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        &:hover {
+            color: var(--chip-remove-color-hover, #111827);
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            pointer-events: none;
         }
     }
 
