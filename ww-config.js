@@ -1039,7 +1039,7 @@ export default {
         },
         chipGap: {
             label: { en: 'Gap' },
-            type: 'Spacing',
+            type: 'Length',
             section: 'style',
             options: {
                 unitChoices: [
@@ -1047,7 +1047,7 @@ export default {
                     { value: 'rem', label: 'rem', min: 0, max: 2 },
                 ],
                 noRange: true,
-                isCorner: false,
+                useVar: true,
             },
             bindable: true,
             responsive: true,
