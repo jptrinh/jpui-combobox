@@ -54,11 +54,14 @@ export default {
                     'chipBgColor',
                     'chipTextColor',
                     'chipFontSize',
+                    'chipFontWeight',
+                    'chipHeight',
                     'chipBorderRadius',
                     'chipPadding',
                     'chipGap',
                     'chipRemoveIconColor',
                     'chipRemoveIconColorHover',
+                    'chipRemoveIconSize',
                 ],
             },
             {
@@ -1007,6 +1010,45 @@ export default {
             defaultValue: '14px',
             hidden: content => !content?.multiple,
         },
+        chipFontWeight: {
+            label: { en: 'Font weight' },
+            type: 'Number',
+            section: 'style',
+            options: { min: 100, max: 900, step: 100 },
+            bindable: true,
+            responsive: true,
+            defaultValue: 400,
+            hidden: content => !content?.multiple,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'number',
+                tooltip: 'Font weight of the chip label (100–900).',
+            },
+            /* wwEditor:end */
+        },
+        chipHeight: {
+            label: { en: 'Height' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 0, max: 100 },
+                    { value: 'rem', label: 'rem', min: 0, max: 6 },
+                ],
+                noRange: true,
+                useVar: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: 'auto',
+            hidden: content => !content?.multiple,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Height of each chip (e.g. "24px"). Leave as "auto" to size based on content.',
+            },
+            /* wwEditor:end */
+        },
         chipBorderRadius: {
             label: { en: 'Border radius' },
             type: 'Spacing',
@@ -1071,6 +1113,28 @@ export default {
             responsive: true,
             defaultValue: '#111827',
             hidden: content => !content?.multiple,
+        },
+        chipRemoveIconSize: {
+            label: { en: 'Remove icon size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [
+                    { value: 'px', label: 'px', min: 6, max: 32 },
+                    { value: 'em', label: 'em', min: 0.5, max: 2 },
+                ],
+                noRange: true,
+            },
+            bindable: true,
+            responsive: true,
+            defaultValue: '14px',
+            hidden: content => !content?.multiple,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Size of the remove (x) icon button in chips.',
+            },
+            /* wwEditor:end */
         },
     },
 };

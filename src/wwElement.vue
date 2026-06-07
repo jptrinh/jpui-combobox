@@ -697,11 +697,14 @@ export default {
             '--chip-bg': props.content?.chipBgColor || '#f3f4f6',
             '--chip-color': props.content?.chipTextColor || '#111827',
             '--chip-font-size': props.content?.chipFontSize || null,
+            '--chip-font-weight': props.content?.chipFontWeight || null,
+            '--chip-height': props.content?.chipHeight || 'auto',
             '--chip-border-radius': props.content?.chipBorderRadius || '4px',
             '--chip-padding': props.content?.chipPadding || '2px 6px',
             '--chip-gap': props.content?.chipGap || '4px',
             '--chip-remove-color': props.content?.chipRemoveIconColor || '#6b7280',
             '--chip-remove-color-hover': props.content?.chipRemoveIconColorHover || '#111827',
+            '--chip-remove-icon-size': props.content?.chipRemoveIconSize || '14px',
         }));
 
         const dropdownCssVars = computed(() => ({
@@ -943,11 +946,13 @@ context.local.data?.['combobox']?.['isOpen']
         align-items: center;
         gap: 4px;
         max-width: 100%;
+        height: var(--chip-height, auto);
         background: var(--chip-bg, #f3f4f6);
         color: var(--chip-color, #111827);
         border-radius: var(--chip-border-radius, 4px);
         padding: var(--chip-padding, 2px 6px);
         font-size: var(--chip-font-size, 0.875em);
+        font-weight: var(--chip-font-weight, 400);
         line-height: 1.4;
     }
 
@@ -963,8 +968,8 @@ context.local.data?.['combobox']?.['isOpen']
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 14px;
-        height: 14px;
+        width: var(--chip-remove-icon-size, 14px);
+        height: var(--chip-remove-icon-size, 14px);
         border: none;
         border-radius: 2px;
         background: transparent;
