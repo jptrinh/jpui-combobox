@@ -6,7 +6,7 @@ export default {
             {
                 label: 'Input',
                 isCollapsible: true,
-                properties: ['inputFontSize', 'inputFontWeight', 'placeholderColor', 'iconColor', 'iconSize', 'iconBtnBg', 'iconBtnBgHover', 'iconBtnBorderRadius'],
+                properties: ['inputFontSize', 'inputFontWeight', 'inputTextColor', 'placeholderColor', 'iconColor', 'iconSize', 'iconBtnBg', 'iconBtnBgHover', 'iconBtnBorderRadius'],
             },
             {
                 label: 'Dropdown',
@@ -460,6 +460,23 @@ export default {
             bindingValidation: {
                 type: 'number',
                 tooltip: 'Font weight of the input text (100–900).',
+            },
+            /* wwEditor:end */
+        },
+        inputTextColor: {
+            label: { en: 'Text color' },
+            type: 'Color',
+            section: 'style',
+            bindable: true,
+            responsive: true,
+            states: true,
+            classes: true,
+            defaultValue: '#111827',
+            /* wwEditor:start */
+            bindingValidation: {
+                cssSupports: 'color',
+                type: 'string',
+                tooltip: 'Color of the text typed/displayed in the input.',
             },
             /* wwEditor:end */
         },

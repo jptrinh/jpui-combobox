@@ -736,6 +736,7 @@ export default {
             '--clear-btn-border-radius': props.content?.iconBtnBorderRadius ?? '4px',
             '--input-font-size': props.content?.inputFontSize || '16px',
             '--input-font-weight': props.content?.inputFontWeight || null,
+            '--input-text-color': props.content?.inputTextColor || '#111827',
             '--chip-bg': props.content?.chipBgColor || '#f3f4f6',
             '--chip-color': props.content?.chipTextColor || '#111827',
             '--chip-font-size': props.content?.chipFontSize || null,
@@ -952,7 +953,7 @@ context.local.data?.['combobox']?.['isOpen']
         font: inherit;
         font-size: var(--input-font-size, inherit);
         font-weight: var(--input-font-weight, inherit);
-        color: inherit;
+        color: var(--input-text-color, inherit);
         padding: 0;
         cursor: inherit;
 
