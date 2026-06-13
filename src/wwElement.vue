@@ -1102,6 +1102,14 @@ context.local.data?.['combobox']?.['isOpen']
         overflow-y: auto;
         padding: var(--dropdown-padding, 4px);
         max-height: inherit;
+
+        // Hide scrollbar while keeping scroll functionality
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
     }
 
     .combobox__option {
