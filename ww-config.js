@@ -6,7 +6,19 @@ export default {
             {
                 label: 'Input',
                 isCollapsible: true,
-                properties: ['inputFontSize', 'inputFontWeight', 'inputTextColor', 'placeholderColor', 'iconColor', 'iconSize', 'iconBtnBg', 'iconBtnBgHover', 'iconBtnBorderRadius'],
+                properties: [
+                    'inputFontSize',
+                    'inputFontWeight',
+                    'inputTextColor',
+                    'placeholderColor',
+                    'iconColor',
+                    'iconSize',
+                    'chevronIconClosed',
+                    'chevronIconOpen',
+                    'iconBtnBg',
+                    'iconBtnBgHover',
+                    'iconBtnBorderRadius',
+                ],
             },
             {
                 label: 'Dropdown',
@@ -39,7 +51,9 @@ export default {
                     'optionFontColorSelected',
                     'optionPadding',
                     'optionBorderRadius',
-                    'optionCheckmarkColor',
+                    'optionIcon',
+                    'optionIconColor',
+                    'optionIconSize',
                 ],
             },
             {
@@ -68,7 +82,16 @@ export default {
             {
                 label: 'Create option',
                 isCollapsible: true,
-                properties: ['createOptionFontSize', 'createOptionFontWeight', 'createOptionFontColor', 'createOptionBgColor', 'createOptionBgColorHover'],
+                properties: [
+                    'createOptionFontSize',
+                    'createOptionFontWeight',
+                    'createOptionFontColor',
+                    'createOptionBgColor',
+                    'createOptionBgColorHover',
+                    'optionCheckmarkColor',
+                    'createOptionIcon',
+                    'createOptionIconSize',
+                ],
             },
         ],
         customSettingsPropertiesOrder: [
@@ -536,6 +559,38 @@ export default {
             },
             /* wwEditor:end */
         },
+        chevronIconClosed: {
+            label: { en: 'Dropdown icon (closed)' },
+            type: 'SystemIcon',
+            section: 'style',
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: null,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'A string that defines the icon code shown when the dropdown is closed: `"fas fa-chevron-down" | "wwi wwi-arrow-down" | "icon-chevron-down"`',
+            },
+            /* wwEditor:end */
+        },
+        chevronIconOpen: {
+            label: { en: 'Dropdown icon (open)' },
+            type: 'SystemIcon',
+            section: 'style',
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: null,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'A string that defines the icon code shown when the dropdown is open. Leave empty to reuse the closed icon, rotated 180°.',
+            },
+            /* wwEditor:end */
+        },
         iconBtnBg: {
             label: { en: 'Icon button background' },
             type: 'Color',
@@ -874,12 +929,53 @@ export default {
             defaultValue: '4px',
         },
         optionCheckmarkColor: {
-            label: { en: 'Checkmark color' },
+            label: { en: 'Create icon color' },
             type: 'Color',
             section: 'style',
             bindable: true,
             responsive: true,
             defaultValue: '#111827',
+        },
+        optionIcon: {
+            label: { en: 'Checked icon' },
+            type: 'SystemIcon',
+            section: 'style',
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: null,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'A string that defines the icon code: `"fas fa-check" | "wwi wwi-cross" | "icon-music-note"`',
+            },
+            /* wwEditor:end */
+        },
+        optionIconColor: {
+            label: { en: 'Checked icon color' },
+            type: 'Color',
+            section: 'style',
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: '#111827',
+        },
+        optionIconSize: {
+            label: { en: 'Checked icon size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [{ value: 'px', label: 'px', min: 1, max: 48 }],
+                noRange: true,
+                useVar: true,
+            },
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: '14px',
         },
 
         // ── STYLE: EMPTY STATE ────────────────────────────────────────────────
@@ -991,6 +1087,37 @@ export default {
             bindable: true,
             responsive: true,
             defaultValue: '#f3f4f6',
+        },
+        createOptionIcon: {
+            label: { en: 'Create icon' },
+            type: 'SystemIcon',
+            section: 'style',
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: null,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'A string that defines the icon code: `"fas fa-plus" | "wwi wwi-add" | "icon-plus"`',
+            },
+            /* wwEditor:end */
+        },
+        createOptionIconSize: {
+            label: { en: 'Create icon size' },
+            type: 'Length',
+            section: 'style',
+            options: {
+                unitChoices: [{ value: 'px', label: 'px', min: 1, max: 48 }],
+                noRange: true,
+                useVar: true,
+            },
+            states: true,
+            classes: true,
+            bindable: true,
+            responsive: true,
+            defaultValue: '14px',
         },
 
         // ── STYLE: CHIPS (multiple mode) ──────────────────────────────────────

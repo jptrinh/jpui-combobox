@@ -107,9 +107,7 @@
             @mouseenter="handleChevronMouseEnter"
             @mouseleave="handleChevronMouseLeave"
         >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-            </svg>
+            <div class="combobox__chevron-icon" v-html="chevronIconHtml" :style="chevronIconStyle"></div>
         </button>
 
         <!-- Dropdown (teleported to #app) -->
@@ -142,17 +140,12 @@
                         >
                             <span class="combobox__option-label">{{ option.label }}</span>
                             <span class="combobox__option-check" aria-hidden="true">
-                                <svg
+                                <div
                                     v-if="option.isSelected"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2.5"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                >
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                                    class="combobox__option-icon"
+                                    v-html="optionIconHtml"
+                                    :style="optionIconStyle"
+                                ></div>
                             </span>
                         </div>
                     </template>
@@ -170,10 +163,7 @@
                         @mouseenter="activeIndex = filteredOptions.length"
                     >
                         <span class="combobox__option-check" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
+                            <div class="combobox__option-icon" v-html="createOptionIconHtml" :style="createOptionIconStyle"></div>
                         </span>
                         <span class="combobox__option-label">{{ createOptionText }}</span>
                     </div>
@@ -218,7 +208,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, inject, onMounted, onBeforeUnmount, shallowRef, nextTick } from 'vue';
+import { ref, computed, watch, watchEffect, inject, onMounted, onBeforeUnmount, shallowRef, nextTick } from 'vue';
 import { useFloating, autoUpdate, flip, shift, offset, size } from '@floating-ui/vue';
 
 export default {
@@ -408,6 +398,73 @@ export default {
             if (!q) return processedOptions.value.map(markSelected);
             return processedOptions.value.filter(o => o.label.toLowerCase().includes(q)).map(markSelected);
         });
+
+        // ── Checked icon ──────────────────────────────────────────────────────
+        const DEFAULT_OPTION_ICON =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+        const { getIcon } = wwLib.useIcons();
+
+        const optionIconHtml = ref(DEFAULT_OPTION_ICON);
+        watchEffect(async () => {
+            optionIconHtml.value = (await getIcon(props.content?.optionIcon)) || DEFAULT_OPTION_ICON;
+        });
+
+        const optionIconStyle = computed(() => ({
+            width: props.content?.optionIconSize || '14px',
+            color: props.content?.optionIconColor || '#111827',
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'pointer-events': 'none',
+        }));
+
+        // ── Chevron (dropdown toggle) icon ────────────────────────────────────
+        const DEFAULT_CHEVRON_ICON =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+        const chevronIconClosedHtml = ref(DEFAULT_CHEVRON_ICON);
+        watchEffect(async () => {
+            chevronIconClosedHtml.value = (await getIcon(props.content?.chevronIconClosed)) || DEFAULT_CHEVRON_ICON;
+        });
+
+        const chevronIconOpenHtml = ref(DEFAULT_CHEVRON_ICON);
+        watchEffect(async () => {
+            chevronIconOpenHtml.value = (await getIcon(props.content?.chevronIconOpen)) || DEFAULT_CHEVRON_ICON;
+        });
+
+        const chevronIconHtml = computed(() =>
+            isOpenEffective.value ? chevronIconOpenHtml.value : chevronIconClosedHtml.value
+        );
+
+        const chevronIconStyle = computed(() => {
+            // No custom "open" icon configured: keep the default behaviour of
+            // rotating the closed icon 180° instead of swapping its shape.
+            const shouldRotate = isOpenEffective.value && !props.content?.chevronIconOpen;
+            return {
+                width: props.content?.iconSize || '16px',
+                height: props.content?.iconSize || '16px',
+                transform: shouldRotate ? 'rotate(180deg)' : 'none',
+                transition: 'transform 0.15s ease',
+            };
+        });
+
+        // ── Create option icon ────────────────────────────────────────────────
+        const DEFAULT_CREATE_ICON =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+
+        const createOptionIconHtml = ref(DEFAULT_CREATE_ICON);
+        watchEffect(async () => {
+            createOptionIconHtml.value = (await getIcon(props.content?.createOptionIcon)) || DEFAULT_CREATE_ICON;
+        });
+
+        const createOptionIconStyle = computed(() => ({
+            width: props.content?.createOptionIconSize || '14px',
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'pointer-events': 'none',
+        }));
 
         // ── Computed state flags ───────────────────────────────────────────────
         const isDisabled = computed(() => props.content?.disabled || false);
@@ -895,6 +952,12 @@ context.local.data?.['combobox']?.['isOpen']
             showCreateOption,
             createOptionText,
             selectCreateOption,
+            optionIconHtml,
+            optionIconStyle,
+            chevronIconHtml,
+            chevronIconStyle,
+            createOptionIconHtml,
+            createOptionIconStyle,
             triggerCssVars,
             dropdownCssVars,
             handleInput,
@@ -1053,6 +1116,11 @@ context.local.data?.['combobox']?.['isOpen']
         padding: 0;
         margin: 0;
         transition: background 0.21s ease;
+    }
+
+    &__clear-btn {
+        background: var(--clear-btn-bg, transparent);
+        border-radius: var(--clear-btn-border-radius, 4px);
 
         svg {
             width: var(--icon-size, 16px);
@@ -1061,21 +1129,20 @@ context.local.data?.['combobox']?.['isOpen']
         }
     }
 
-    &__clear-btn {
-        background: var(--clear-btn-bg, transparent);
-        border-radius: var(--clear-btn-border-radius, 4px);
-    }
-
     &__chevron-btn {
         background: var(--chevron-btn-bg, transparent);
         border-radius: var(--chevron-btn-border-radius, 4px);
+    }
+
+    &__chevron-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         svg {
-            transition: transform 0.15s ease;
-        }
-
-        &.is-open svg {
-            transform: rotate(180deg);
+            width: 100%;
+            height: 100%;
+            display: block;
         }
     }
 
@@ -1154,10 +1221,13 @@ context.local.data?.['combobox']?.['isOpen']
         align-items: center;
         justify-content: center;
         color: var(--option-check-color, #111827);
+    }
 
+    .combobox__option-icon {
         svg {
-            width: 14px;
-            height: 14px;
+            width: 100%;
+            height: auto;
+            display: block;
         }
     }
 
