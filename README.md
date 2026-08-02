@@ -114,8 +114,11 @@ Access component state in formulas via `context.local.data?.['combobox']`:
 npm i
 
 # Serve locally (add to WeWeb via the developer popup)
-npm run serve --port=3100
+npm run serve -- port=3100
 
 # Check for build errors before release
-npm run build --name=combobox
+npm run build -- name=combobox type=wwobject
 ```
+
+> The CLI parses bare `name=` / `port=` args, not `--name=` / `--port=`. Passing
+> `--name=combobox` fails with `arg 'name="name"' not specified`.
