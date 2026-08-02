@@ -41,6 +41,7 @@ export default {
                 label: 'Option',
                 isCollapsible: true,
                 properties: [
+                    'customOptionContent',
                     'optionFontSize',
                     'optionFontWeight',
                     'optionFontColor',
@@ -806,6 +807,33 @@ export default {
         },
 
         // ── STYLE: OPTIONS ────────────────────────────────────────────────────
+        customOptionContent: {
+            label: { en: 'Custom content' },
+            type: 'OnOff',
+            section: 'style',
+            defaultValue: false,
+            bindable: true,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'boolean',
+                tooltip: 'Replace the built-in option row (label + checked icon) with your own dropzone layout.',
+            },
+            propertyHelp: {
+                tooltip:
+                    'Design the option row yourself. The layout is authored once in the "Option" dropzone in the navigator and repeated for every option — bind text and images to `context.item.data.label` and `context.item.data.value`.',
+            },
+            /* wwEditor:end */
+        },
+        // Dropzone for the repeated option row. Navigator-only (never a sidepanel
+        // input), so `hidden` must stay literally true — see customOptionContent
+        // for the toggle that renders it.
+        optionElement: {
+            hidden: true,
+            defaultValue: [],
+            navigator: {
+                group: 'Option',
+            },
+        },
         optionFontSize: {
             label: { en: 'Font size' },
             type: 'Length',
@@ -936,6 +964,8 @@ export default {
             responsive: true,
             defaultValue: '#111827',
         },
+        // The checked icon belongs to the built-in option row only — a custom row
+        // owns its whole content, so these three have nothing to drive.
         optionIcon: {
             label: { en: 'Checked icon' },
             type: 'SystemIcon',
@@ -945,6 +975,7 @@ export default {
             bindable: true,
             responsive: true,
             defaultValue: null,
+            hidden: content => !!content?.customOptionContent,
             /* wwEditor:start */
             bindingValidation: {
                 type: 'string',
@@ -961,6 +992,7 @@ export default {
             bindable: true,
             responsive: true,
             defaultValue: '#111827',
+            hidden: content => !!content?.customOptionContent,
         },
         optionIconSize: {
             label: { en: 'Checked icon size' },
@@ -976,6 +1008,7 @@ export default {
             bindable: true,
             responsive: true,
             defaultValue: '14px',
+            hidden: content => !!content?.customOptionContent,
         },
 
         // ── STYLE: EMPTY STATE ────────────────────────────────────────────────
