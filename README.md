@@ -15,7 +15,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 - **Form integration** — registers with WeWeb form elements for validation and submission
 - **Workflow actions** — open, close, toggle, set value, reset, focus
 - **Local context** — exposes `value`, `label`, `selectedOption`, `selectedOptions`, `multiple`, `isOpen`, `searchQuery`, and `options` to the formula editor
-- **States** — `focus`, `focus-visible`, `disabled`, `readonly`, `error` for style targeting
+- **States** — `focus`, `focus-visible`, `disabled`, `readonly`, `invalid` for style targeting
 
 ## Settings
 
@@ -35,15 +35,12 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Close on select | On/Off | Close the dropdown after picking an option |
 | Disabled | On/Off | Disable the entire combobox |
 | Read only | On/Off | Show the value without allowing changes |
-| Invalid | On/Off | Sets `aria-invalid` and applies the **`error`** state for validation styling |
+| Invalid | On/Off | Sets `aria-invalid` and applies the `invalid` state for validation styling |
 | Required | On/Off | Mark the field as required for form submission |
 | Accessible label | Text | Screen-reader name. Falls back to the form field name, then the element name |
 | Clear button label | Text | Screen-reader name for the × button |
 | Toggle button label | Text | Screen-reader name for the chevron button |
 | Remove chip label | Text | Prefix for chip remove buttons — "Remove" announces as "Remove Banana" |
-
-> The **Invalid** property drives the state named **`error`** (WeWeb's own vocabulary
-> has no `invalid` state). Select `error` in the state picker to style invalid fields.
 
 ## Custom option content
 

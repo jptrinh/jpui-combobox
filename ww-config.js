@@ -134,9 +134,11 @@ export default {
         autoByContent: true,
         displayAllowedValues: ['block'],
     },
-    // `focus-visible` is declared so the outline can be styled from the native
-    // style panel per-state, rather than through a bespoke colour property.
-    states: ['focus', 'focus-visible', 'disabled', 'readonly', 'error'],
+    // `focus-visible` and `invalid` are declared so their styling can be set
+    // from the native style panel per-state, rather than through bespoke
+    // properties. Neither is used by WeWeb's own components, but the picker is
+    // not known to reject them.
+    states: ['focus', 'focus-visible', 'disabled', 'readonly', 'invalid'],
     triggerEvents: [
         { name: 'change', label: { en: 'On change' }, event: { value: '' }, default: true },
         { name: 'initValueChange', label: { en: 'On init value change' }, event: { value: '' } },

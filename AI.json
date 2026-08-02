@@ -115,7 +115,7 @@
         },
         {
             "name": "invalid",
-            "description": "Mark the field as invalid. Sets `aria-invalid` and activates the `error` state.",
+            "description": "Mark the field as invalid. Sets `aria-invalid` and activates the `invalid` state.",
             "type": "boolean",
             "defaultValue": false
         },
@@ -547,8 +547,8 @@
             "description": "Active while the `readonly` property is on."
         },
         {
-            "name": "error",
-            "description": "Active while the `invalid` property is on. Note the state is named `error` even though the property is named `invalid` — that is WeWeb's state vocabulary."
+            "name": "invalid",
+            "description": "Active while the `invalid` property is on. Style validation feedback here (border, background, text color) from the native style panel."
         }
     ],
     "events": [
@@ -699,7 +699,7 @@
         "Field mapping properties (`mappingLabel` and friends) only appear once `choices` is BOUND to data. With hand-entered options the editor hides them and the built-in `label` / `value` / `disabled` keys are used.",
         "The dropdown is teleported outside the component, so page-level CSS targeting a parent will not reach it. Style it through the Dropdown / Option style properties instead.",
         "Elements dropped into `optionElement` must not be focusable or clickable in a way that swallows the row click — the row itself handles selection.",
-        "The `invalid` PROPERTY drives the state named `error`. Style invalid instances by selecting the `error` state, not `invalid`."
+        "Focus styling: the `focus-visible` state activates only for keyboard focus (the browser's own :focus-visible heuristic decides), `focus` activates however focus arrived. States apply to the component ROOT, so they cannot style the inner chevron / clear buttons — use the `focusRingColor` property for those."
     ],
     "examples": [
         {

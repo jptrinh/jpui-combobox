@@ -644,10 +644,10 @@ export default {
             }
         }
 
-        // ── Sync disabled / readonly / error WeWeb states ─────────────────────
+        // ── Sync disabled / readonly / invalid WeWeb states ───────────────────
         watch(isDisabled, val => { emit(val ? 'add-state' : 'remove-state', 'disabled'); }, { immediate: true });
         watch(isReadonly, val => { emit(val ? 'add-state' : 'remove-state', 'readonly'); }, { immediate: true });
-        watch(isInvalid, val => { emit(val ? 'add-state' : 'remove-state', 'error'); }, { immediate: true });
+        watch(isInvalid, val => { emit(val ? 'add-state' : 'remove-state', 'invalid'); }, { immediate: true });
 
         // ── Open / close ──────────────────────────────────────────────────────
         function openDropdown() {
