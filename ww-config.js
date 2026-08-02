@@ -120,6 +120,11 @@ export default {
                     'forceEmptyState',
                 ],
             },
+            {
+                label: 'Accessibility',
+                isCollapsible: true,
+                properties: ['ariaLabel', 'clearAriaLabel', 'toggleAriaLabel', 'removeChipAriaLabel'],
+            },
             'formInfobox',
             ['fieldName', 'customValidation', 'validation'],
         ],
@@ -128,6 +133,10 @@ export default {
         autoByContent: true,
         displayAllowedValues: ['block'],
     },
+    // `focus-visible` and `invalid` are declared so their styling can be set
+    // from the native style panel per-state, rather than through bespoke
+    // properties. Neither is used by WeWeb's own components, but the picker is
+    // not known to reject them.
     states: ['focus', 'focus-visible', 'disabled', 'readonly', 'invalid'],
     triggerEvents: [
         { name: 'change', label: { en: 'On change' }, event: { value: '' }, default: true },
@@ -405,6 +414,73 @@ export default {
         },
         /* wwEditor:end */
 
+        // ── ACCESSIBILITY ─────────────────────────────────────────────────────
+        // A coded component gets no accessible name for free. `ariaLabel` falls
+        // back to the field name, then the element name in the tree, so an author
+        // who sets nothing still gets something better than "Combobox" everywhere.
+        ariaLabel: {
+            label: { en: 'Accessible label' },
+            type: 'Text',
+            section: 'settings',
+            multiLang: true,
+            bindable: true,
+            defaultValue: null,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Screen-reader name for the combobox. Falls back to the field name, then the element name.',
+            },
+            propertyHelp: {
+                tooltip:
+                    'What a screen reader announces for this field. Leave empty to fall back to the form field name, then the element name in the navigator.',
+            },
+            /* wwEditor:end */
+        },
+        clearAriaLabel: {
+            label: { en: 'Clear button label' },
+            type: 'Text',
+            section: 'settings',
+            multiLang: true,
+            bindable: true,
+            defaultValue: { en: 'Clear selection' },
+            hidden: content => content?.clearable === false,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Screen-reader name for the clear (×) button.',
+            },
+            /* wwEditor:end */
+        },
+        toggleAriaLabel: {
+            label: { en: 'Toggle button label' },
+            type: 'Text',
+            section: 'settings',
+            multiLang: true,
+            bindable: true,
+            defaultValue: { en: 'Show options' },
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Screen-reader name for the chevron button that opens the dropdown.',
+            },
+            /* wwEditor:end */
+        },
+        removeChipAriaLabel: {
+            label: { en: 'Remove chip label' },
+            type: 'Text',
+            section: 'settings',
+            multiLang: true,
+            bindable: true,
+            defaultValue: { en: 'Remove' },
+            hidden: content => !content?.multiple,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Prefix for the chip remove button, e.g. "Remove" → "Remove Banana".',
+            },
+            /* wwEditor:end */
+        },
+
         // ── FORM ──────────────────────────────────────────────────────────────
         /* wwEditor:start */
         form: {
@@ -513,7 +589,9 @@ export default {
             responsive: true,
             states: true,
             classes: true,
-            defaultValue: '#9ca3af',
+            // #9ca3af on white is only 2.54:1 and fails WCAG AA for text.
+            // #6b7280 gives 4.83:1.
+            defaultValue: '#6b7280',
             /* wwEditor:start */
             bindingValidation: {
                 cssSupports: 'color',
