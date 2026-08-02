@@ -265,12 +265,6 @@
             "defaultValue": "#6b7280"
         },
         {
-            "name": "focusRingColor",
-            "description": "Keyboard-only focus outline (:focus-visible) drawn around the field and the icon buttons. Never appears on mouse click. Set it transparent if you style focus yourself via the `focus` state.",
-            "type": "string",
-            "defaultValue": "#2563eb"
-        },
-        {
             "name": "iconColor",
             "description": "Color of the chevron and clear icons.",
             "type": "string",
@@ -536,7 +530,7 @@
         },
         {
             "name": "focus-visible",
-            "description": "Active only when focus arrived by keyboard, decided by the browser's :focus-visible heuristic. Style the outline here to get a keyboard-only focus ring from the native style panel; it applies to the component root, not to the inner chevron/clear buttons."
+            "description": "Active only when focus arrived by keyboard, decided by the browser's :focus-visible heuristic. Set outline here from the native style panel to get a keyboard-only focus ring. The component ships no focus ring of its own, so if you leave this state unstyled there is no keyboard focus indicator."
         },
         {
             "name": "disabled",
@@ -699,7 +693,7 @@
         "Field mapping properties (`mappingLabel` and friends) only appear once `choices` is BOUND to data. With hand-entered options the editor hides them and the built-in `label` / `value` / `disabled` keys are used.",
         "The dropdown is teleported outside the component, so page-level CSS targeting a parent will not reach it. Style it through the Dropdown / Option style properties instead.",
         "Elements dropped into `optionElement` must not be focusable or clickable in a way that swallows the row click — the row itself handles selection.",
-        "Focus styling: the `focus-visible` state activates only for keyboard focus (the browser's own :focus-visible heuristic decides), `focus` activates however focus arrived. States apply to the component ROOT, so they cannot style the inner chevron / clear buttons — use the `focusRingColor` property for those."
+        "Focus styling is entirely author-driven: the component sets `outline: none` on its input and ships no focus ring. Style outline on the `focus-visible` state (keyboard focus only) or the `focus` state (any focus) from the native style panel. States apply to the component ROOT, so they reach the field but not the inner chevron / clear buttons."
     ],
     "examples": [
         {

@@ -11,7 +11,6 @@ export default {
                     'inputFontWeight',
                     'inputTextColor',
                     'placeholderColor',
-                    'focusRingColor',
                     'iconColor',
                     'iconSize',
                     'chevronIconClosed',
@@ -598,27 +597,6 @@ export default {
                 cssSupports: 'color',
                 type: 'string',
                 tooltip: 'Color of the placeholder text.',
-            },
-            /* wwEditor:end */
-        },
-        focusRingColor: {
-            label: { en: 'Focus ring color' },
-            type: 'Color',
-            section: 'style',
-            options: { nullable: true },
-            bindable: true,
-            responsive: true,
-            classes: true,
-            defaultValue: '#2563eb',
-            /* wwEditor:start */
-            bindingValidation: {
-                cssSupports: 'color',
-                type: 'string',
-                tooltip: 'Outline drawn around the field and the icon buttons on keyboard focus only.',
-            },
-            propertyHelp: {
-                tooltip:
-                    'Keyboard-only focus ring (:focus-visible) — it never shows on mouse click. Set it to transparent if you style focus yourself through the "focus" state.',
             },
             /* wwEditor:end */
         },

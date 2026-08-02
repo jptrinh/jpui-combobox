@@ -931,7 +931,6 @@ export default {
 
         // ── CSS variables ─────────────────────────────────────────────────────
         const triggerCssVars = computed(() => ({
-            '--focus-ring': props.content?.focusRingColor || '#2563eb',
             '--placeholder-color': props.content?.placeholderColor || '#6b7280',
             '--icon-color': props.content?.iconColor || '#6b7280',
             '--icon-size': props.content?.iconSize || '16px',
@@ -1159,13 +1158,6 @@ context.local.data?.['combobox']?.['isOpen']
     cursor: text;
     width: 100%;
 
-    // The inputs clear their own outline, so the keyboard ring is drawn on the
-    // field as a whole. :focus-visible keeps it off mouse clicks (WCAG 2.4.7).
-    &:has(.combobox__input:focus-visible) {
-        outline: 2px solid var(--focus-ring, #2563eb);
-        outline-offset: 2px;
-    }
-
     &.is-disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -1286,11 +1278,6 @@ context.local.data?.['combobox']?.['isOpen']
         padding: 0;
         margin: 0;
         transition: background 0.21s ease;
-
-        &:focus-visible {
-            outline: 2px solid var(--focus-ring, #2563eb);
-            outline-offset: 1px;
-        }
     }
 
     &__clear-btn {

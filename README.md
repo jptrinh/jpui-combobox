@@ -7,7 +7,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 - **Type-ahead search** — filters options as the user types
 - **Single or multiple** — multiple selection renders removable chips inside the field
 - **Keyboard navigation** — Arrow keys, Enter, Escape, Tab all work as expected; Backspace removes the last chip
-- **ARIA-compliant** — `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, `aria-invalid`, named buttons, and a keyboard-only focus ring
+- **ARIA-compliant** — `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, `aria-invalid`, and named buttons
 - **Floating dropdown** — powered by Floating UI with auto-flip and scroll-shift
 - **Clear button** — optional one-click reset
 - **Create option** — lets users create new values when no match is found
@@ -70,7 +70,7 @@ Turning the toggle back off keeps the dropped elements — they stay stored on t
 
 The dropdown is fully customisable from the style panel, grouped into:
 
-- **Input** — font size, font weight, placeholder color, focus ring color, icon color, icon size, chevron icons (closed/open), icon button background and border radius (default and hover)
+- **Input** — font size, font weight, placeholder color, icon color, icon size, chevron icons (closed/open), icon button background and border radius (default and hover)
 - **Dropdown** — position, offset, width, max height, background, border, radius, padding, shadow, z-index
 - **Option** — custom content toggle (see above), font size, font weight, text color, background, hover/selected variants, padding, border radius, checked icon (icon, color, size)
 - **Empty state** — font size, text color, padding
@@ -79,15 +79,16 @@ The dropdown is fully customisable from the style panel, grouped into:
 
 ### Focus styling
 
+Focus styling is yours to define — the component ships no focus ring of its own.
+
 The **`focus-visible`** state activates only when focus arrived by keyboard (the
 browser's own `:focus-visible` heuristic decides), while **`focus`** activates however
 focus arrived. Select `focus-visible` in the state picker and set **outline** from the
-native style panel to get a keyboard-only focus ring — no coded property involved.
+native style panel to get a keyboard-only focus ring.
 
-**Focus ring color** is only a default, and it is the *only* way to reach the chevron
-and clear buttons: WeWeb states apply to the component root, so they can't style those
-inner nodes. Anything you set on the `focus-visible` state overrides the default ring
-on the field itself.
+> Leave both states unstyled and there is no visible keyboard focus indicator, which
+> is a WCAG 2.4.7 failure. States apply to the component root, so they style the field
+> but not the chevron and clear buttons.
 
 ## Trigger events
 
