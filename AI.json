@@ -532,7 +532,11 @@
     "states": [
         {
             "name": "focus",
-            "description": "Active while the field or one of its buttons holds focus."
+            "description": "Active while the field or one of its buttons holds focus, however focus arrived."
+        },
+        {
+            "name": "focus-visible",
+            "description": "Active only when focus arrived by keyboard, decided by the browser's :focus-visible heuristic. Style the outline here to get a keyboard-only focus ring from the native style panel; it applies to the component root, not to the inner chevron/clear buttons."
         },
         {
             "name": "disabled",

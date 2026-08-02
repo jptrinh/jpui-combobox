@@ -134,10 +134,9 @@ export default {
         autoByContent: true,
         displayAllowedValues: ['block'],
     },
-    // Only names WeWeb's own components use are honoured by the state picker.
-    // `focus-visible` is not one of them (it is CSS-only here), and the invalid
-    // state is spelled `error`.
-    states: ['focus', 'disabled', 'readonly', 'error'],
+    // `focus-visible` is declared so the outline can be styled from the native
+    // style panel per-state, rather than through a bespoke colour property.
+    states: ['focus', 'focus-visible', 'disabled', 'readonly', 'error'],
     triggerEvents: [
         { name: 'change', label: { en: 'On change' }, event: { value: '' }, default: true },
         { name: 'initValueChange', label: { en: 'On init value change' }, event: { value: '' } },

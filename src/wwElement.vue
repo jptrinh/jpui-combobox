@@ -277,6 +277,7 @@ export default {
         const inputRef = ref(null);
         const isOpen = ref(false);
         const isReallyFocused = ref(false);
+        const isFocusVisible = ref(false);
         const activeIndex = ref(-1);
         const inputText = ref('');
         const isTyping = ref(false);
@@ -617,9 +618,30 @@ export default {
             isClearHovered.value = false;
         }
 
+        // Delegate "was this focus keyboard-driven?" to the browser's own
+        // :focus-visible heuristic rather than tracking modality by hand.
+        // Duck-typed, never instanceof — the editor runs in a different realm.
+        function isKeyboardFocus(event) {
+            const el = event?.target;
+            if (typeof el?.matches !== 'function') return false;
+            try {
+                return el.matches(':focus-visible');
+            } catch {
+                // Engine without :focus-visible support — treat as not keyboard.
+                return false;
+            }
+        }
+
         function setFocused(focused) {
             isReallyFocused.value = focused;
-            emit(focused ? 'add-state' : 'remove-state', 'focus');
+            if (focused) {
+                emit('add-state', 'focus');
+                if (isFocusVisible.value) emit('add-state', 'focus-visible');
+            } else {
+                emit('remove-state', 'focus');
+                emit('remove-state', 'focus-visible');
+                isFocusVisible.value = false;
+            }
         }
 
         // ── Sync disabled / readonly / error WeWeb states ─────────────────────
@@ -677,8 +699,11 @@ export default {
             if (!isOpen.value) openDropdown();
         }
 
-        function handleFocus() {
+        function handleFocus(event) {
             const wasFocused = isReallyFocused.value;
+            // Set before setFocused() — that is what decides whether the
+            // focus-visible state is emitted alongside focus.
+            isFocusVisible.value = isKeyboardFocus(event);
             setFocused(true);
             if (!wasFocused) {
                 emit('trigger-event', { name: 'focus', event: null });

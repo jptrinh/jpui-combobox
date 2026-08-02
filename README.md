@@ -15,7 +15,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 - **Form integration** — registers with WeWeb form elements for validation and submission
 - **Workflow actions** — open, close, toggle, set value, reset, focus
 - **Local context** — exposes `value`, `label`, `selectedOption`, `selectedOptions`, `multiple`, `isOpen`, `searchQuery`, and `options` to the formula editor
-- **States** — `focus`, `disabled`, `readonly`, `error` for style targeting
+- **States** — `focus`, `focus-visible`, `disabled`, `readonly`, `error` for style targeting
 
 ## Settings
 
@@ -80,9 +80,17 @@ The dropdown is fully customisable from the style panel, grouped into:
 - **Chips** *(multiple mode)* — background, text color, font size/weight, height, radius, padding, gap, label-to-icon gap, remove icon color/hover/size
 - **Create option** — font size, font weight, text color, background, hover background, create icon and its color/size
 
-**Focus ring color** draws a `:focus-visible` outline around the field and the icon
-buttons — keyboard only, never on mouse click. Set it to transparent if you'd rather
-style focus entirely through the `focus` state.
+### Focus styling
+
+The **`focus-visible`** state activates only when focus arrived by keyboard (the
+browser's own `:focus-visible` heuristic decides), while **`focus`** activates however
+focus arrived. Select `focus-visible` in the state picker and set **outline** from the
+native style panel to get a keyboard-only focus ring — no coded property involved.
+
+**Focus ring color** is only a default, and it is the *only* way to reach the chevron
+and clear buttons: WeWeb states apply to the component root, so they can't style those
+inner nodes. Anything you set on the `focus-visible` state overrides the default ring
+on the field itself.
 
 ## Trigger events
 
