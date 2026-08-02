@@ -110,15 +110,15 @@
             <div class="combobox__chevron-icon" v-html="chevronIconHtml" :style="chevronIconStyle"></div>
         </button>
 
-        <!-- Dropdown (teleported to #app) -->
-        <teleport v-if="isOpenEffective" :to="appRoot">
+        <!-- Dropdown (teleported to #app, except while authoring the option dropzone) -->
+        <teleport v-if="isOpenEffective" :to="appRoot" :disabled="isTeleportDisabled">
             <div
                 ref="dropdownRef"
                 class="combobox__dropdown"
                 :style="[floatingStyles, dropdownCssVars]"
                 role="listbox"
                 :id="dropdownId"
-                @mousedown.prevent
+                @mousedown="handleDropdownMousedown"
             >
                 <div class="combobox__options">
                     <template v-if="filteredOptions.length > 0">
@@ -135,18 +135,37 @@
                             role="option"
                             :aria-selected="option.isSelected"
                             :aria-disabled="option.disabled || undefined"
+                            :aria-label="hasCustomOptionContent ? option.label : undefined"
                             @click="selectOption(option)"
                             @mouseenter="activeIndex = index"
                         >
-                            <span class="combobox__option-label">{{ option.label }}</span>
-                            <span class="combobox__option-check" aria-hidden="true">
-                                <div
-                                    v-if="option.isSelected"
-                                    class="combobox__option-icon"
-                                    v-html="optionIconHtml"
-                                    :style="optionIconStyle"
-                                ></div>
-                            </span>
+                            <!-- Custom row: one authored layout, repeated per option -->
+                            <wwLayoutItemContext
+                                v-if="hasCustomOptionContent"
+                                is-repeat
+                                :index="index"
+                                :item="null"
+                                :data="optionContexts[index]"
+                                :repeated-items="optionContexts"
+                            >
+                                <wwLayout
+                                    path="optionElement"
+                                    direction="row"
+                                    class="combobox__option-slot"
+                                />
+                            </wwLayoutItemContext>
+                            <!-- Built-in row -->
+                            <template v-else>
+                                <span class="combobox__option-label">{{ option.label }}</span>
+                                <span class="combobox__option-check" aria-hidden="true">
+                                    <div
+                                        v-if="option.isSelected"
+                                        class="combobox__option-icon"
+                                        v-html="optionIconHtml"
+                                        :style="optionIconStyle"
+                                    ></div>
+                                </span>
+                            </template>
                         </div>
                     </template>
                     <div v-else-if="!showCreateOption" class="combobox__empty">
@@ -253,8 +272,31 @@ export default {
             return isOpen.value;
         });
 
+        // ── Custom option content (dropzone) ──────────────────────────────────
+        const hasCustomOptionContent = computed(() => props.content?.customOptionContent || false);
+
         const appRoot = computed(() => wwLib.getFrontDocument().querySelector('#app'));
         const dropdownId = `combobox-${props.uid}`;
+
+        // Teleporting moves the option dropzone out of the component's DOM subtree,
+        // and WeWeb's editor drag & drop and selection overlays rely on that
+        // containment. Keep the dropdown in place while the dropzone is being
+        // authored — the front bundle always teleports.
+        const isTeleportDisabled = computed(() => {
+            /* wwEditor:start */
+            if (isEditing.value && hasCustomOptionContent.value) return true;
+            /* wwEditor:end */
+            return false;
+        });
+
+        function handleDropdownMousedown(event) {
+            /* wwEditor:start */
+            // preventDefault() swallows the editor's drag gestures inside the dropzone.
+            if (isEditing.value) return;
+            /* wwEditor:end */
+            // Keep focus on the input when clicking anywhere in the dropdown.
+            event.preventDefault();
+        }
 
         // ── Floating UI ───────────────────────────────────────────────────────
         const floatingMiddleware = computed(() => [
@@ -398,6 +440,12 @@ export default {
             if (!q) return processedOptions.value.map(markSelected);
             return processedOptions.value.filter(o => o.label.toLowerCase().includes(q)).map(markSelected);
         });
+
+        // Repeat context handed to the option dropzone. Deliberately narrow for now:
+        // `isSelected` / `disabled` stay out until they're needed.
+        const optionContexts = computed(() =>
+            filteredOptions.value.map(o => ({ label: o.label, value: o.value }))
+        );
 
         // ── Checked icon ──────────────────────────────────────────────────────
         const DEFAULT_OPTION_ICON =
@@ -941,6 +989,10 @@ context.local.data?.['combobox']?.['isOpen']
             inputText,
             activeIndex,
             filteredOptions,
+            hasCustomOptionContent,
+            optionContexts,
+            isTeleportDisabled,
+            handleDropdownMousedown,
             placeholderText,
             emptyText,
             floatingStyles,
@@ -1237,6 +1289,12 @@ context.local.data?.['combobox']?.['isOpen']
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    // Dropzone slot — the authored layout owns the whole row.
+    .combobox__option-slot {
+        flex: 1;
+        min-width: 0;
     }
 
     .combobox__empty {

@@ -10,6 +10,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 - **Floating dropdown** — powered by Floating UI with auto-flip and scroll-shift
 - **Clear button** — optional one-click reset
 - **Create option** — lets users create new values when no match is found
+- **Custom option content** — swap the built-in option row for your own dropzone layout, repeated per option
 - **Form integration** — registers with WeWeb form elements for validation and submission
 - **Workflow actions** — open, close, toggle, set value, reset, focus
 - **Local context** — exposes `value`, `label`, `selectedOption`, `isOpen`, `searchQuery`, and `options` to the formula editor
@@ -35,13 +36,37 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Invalid | On/Off | Apply the `invalid` state for validation styling |
 | Required | On/Off | Mark the field as required for form submission |
 
+## Custom option content
+
+Turn on **Style → Option → Custom content** to design the option row yourself instead of using the built-in label + checked icon.
+
+An **Option** dropzone then appears in the navigator. What you drop there is authored **once** and repeated for every option — it's a template, not a per-option layout. Bind text, images and styles to the repeat context:
+
+| Binding | Value |
+|---|---|
+| `context.item.data.label` | The option's mapped label |
+| `context.item.data.value` | The option's mapped value |
+| `context.item.index` | Its position in the filtered list |
+
+The row wrapper keeps `role="option"`, click-to-select, hover highlighting, keyboard navigation and the `is-selected` / `is-active` / `is-disabled` classes — so the **Option** style properties (background, hover/selected background, padding, border radius) all still apply. Only the row's *contents* become yours.
+
+### Things to know
+
+- **Label field is still required.** Search filtering, the input's displayed text and multi-select chips all read the mapped label, whether or not you render it.
+- **No built-in selection mark.** The checked icon is part of the built-in row. Selected options still get the selected background from the style panel; add your own indicator inside the dropzone if you want a mark. `isSelected` is not yet exposed in the repeat context.
+- **Keep dropped elements non-focusable.** The combobox holds focus on the search input and points at the active option with `aria-activedescendant`. A `ww-button` or input inside an option steals that focus and breaks keyboard navigation — prefer `ww-text`, `ww-image`, `ww-div`.
+- **Options are announced by their mapped label** via `aria-label` on the row, so an icon-only row is still named.
+- **Authoring tip**: turn on **Force open** (Settings → Behavior) to keep the dropdown open on the canvas while you build the row. While custom content is on, the dropdown renders in place rather than teleporting, so drag & drop and selection work; at runtime it always teleports.
+
+Turning the toggle back off keeps the dropped elements — they stay stored on the element and reappear when you re-enable it.
+
 ## Style
 
 The dropdown is fully customisable from the style panel, grouped into:
 
 - **Input** — font size, font weight, placeholder color, icon color, icon size, icon button background and border radius (default and hover)
 - **Dropdown** — position, offset, width, max height, background, border, radius, padding, shadow, z-index
-- **Option** — font size, font weight, text color, background, hover/selected variants, padding, border radius, checkmark color
+- **Option** — custom content toggle (see above), font size, font weight, text color, background, hover/selected variants, padding, border radius, checkmark color
 - **Empty state** — text color, padding
 - **Create option** — font size, font weight, text color, background, hover background
 
@@ -89,8 +114,11 @@ Access component state in formulas via `context.local.data?.['combobox']`:
 npm i
 
 # Serve locally (add to WeWeb via the developer popup)
-npm run serve --port=3100
+npm run serve -- port=3100
 
 # Check for build errors before release
-npm run build --name=combobox
+npm run build -- name=combobox type=wwobject
 ```
+
+> The CLI parses bare `name=` / `port=` args, not `--name=` / `--port=`. Passing
+> `--name=combobox` fails with `arg 'name="name"' not specified`.
