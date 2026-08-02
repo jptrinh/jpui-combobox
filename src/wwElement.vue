@@ -18,6 +18,7 @@
                     type="button"
                     class="combobox__chip-remove"
                     tabindex="-1"
+                    :aria-label="`${removeChipLabel} ${option.label}`"
                     :disabled="isDisabled || isReadonly"
                     @click.stop="removeChip(option)"
                     @mousedown.prevent
@@ -34,8 +35,11 @@
                 type="text"
                 autocomplete="off"
                 role="combobox"
+                aria-autocomplete="list"
+                :aria-label="accessibleName"
                 :aria-expanded="isOpenEffective"
                 :aria-haspopup="'listbox'"
+                :aria-controls="isOpenEffective ? dropdownId : undefined"
                 :aria-activedescendant="activeDescendantId"
                 :aria-invalid="isInvalid || undefined"
                 :disabled="isDisabled"
@@ -57,8 +61,11 @@
             type="text"
             autocomplete="off"
             role="combobox"
+            aria-autocomplete="list"
+            :aria-label="accessibleName"
             :aria-expanded="isOpenEffective"
             :aria-haspopup="'listbox'"
+            :aria-controls="isOpenEffective ? dropdownId : undefined"
             :aria-activedescendant="activeDescendantId"
             :aria-invalid="isInvalid || undefined"
             :disabled="isDisabled"
@@ -77,6 +84,7 @@
             class="combobox__clear-btn"
             type="button"
             tabindex="0"
+            :aria-label="clearLabel"
             @click.stop="clearValue"
             @keydown.enter.prevent.stop="clearValue"
             @keydown.space.prevent.stop="clearValue"
@@ -99,6 +107,9 @@
             :class="{ 'is-open': isOpenEffective }"
             type="button"
             tabindex="0"
+            :aria-label="toggleLabel"
+            :aria-expanded="isOpenEffective"
+            :aria-controls="isOpenEffective ? dropdownId : undefined"
             @click.stop="toggleDropdown"
             @keydown="handleChevronKeydown"
             @focus="handleFocus"
@@ -110,17 +121,24 @@
             <div class="combobox__chevron-icon" v-html="chevronIconHtml" :style="chevronIconStyle"></div>
         </button>
 
-        <!-- Dropdown (teleported to #app, except while authoring the option dropzone) -->
-        <teleport v-if="isOpenEffective" :to="appRoot" :disabled="isTeleportDisabled">
+        <!-- Dropdown (teleported out of the component, except while authoring the option dropzone) -->
+        <teleport v-if="isOpenEffective" :to="teleportTarget" :disabled="isTeleportDisabled">
             <div
                 ref="dropdownRef"
                 class="combobox__dropdown"
                 :style="[floatingStyles, dropdownCssVars]"
-                role="listbox"
-                :id="dropdownId"
                 @mousedown="handleDropdownMousedown"
             >
-                <div class="combobox__options">
+                <!-- role="listbox" lives here, not on the wrapper above: every
+                     role="option" must be a direct child of the listbox. -->
+                <div
+                    ref="optionsRef"
+                    class="combobox__options"
+                    role="listbox"
+                    :id="dropdownId"
+                    :aria-label="accessibleName"
+                    :aria-multiselectable="isMultiple || undefined"
+                >
                     <template v-if="filteredOptions.length > 0">
                         <div
                             v-for="(option, index) in filteredOptions"
@@ -168,7 +186,7 @@
                             </template>
                         </div>
                     </template>
-                    <div v-else-if="!showCreateOption" class="combobox__empty">
+                    <div v-else-if="!showCreateOption" class="combobox__empty" role="presentation">
                         {{ emptyText }}
                     </div>
                     <div
@@ -255,10 +273,10 @@ export default {
         // ── Refs ──────────────────────────────────────────────────────────────
         const triggerRef = ref(null);
         const dropdownRef = ref(null);
+        const optionsRef = ref(null);
         const inputRef = ref(null);
         const isOpen = ref(false);
         const isReallyFocused = ref(false);
-        const isFocusVisible = ref(false);
         const activeIndex = ref(-1);
         const inputText = ref('');
         const isTyping = ref(false);
@@ -275,7 +293,15 @@ export default {
         // ── Custom option content (dropzone) ──────────────────────────────────
         const hasCustomOptionContent = computed(() => props.content?.customOptionContent || false);
 
-        const appRoot = computed(() => wwLib.getFrontDocument().querySelector('#app'));
+        // Resolved after mount, not in a computed: during editor boot `#app` may
+        // not exist yet, and a computed would cache that `null` forever — which
+        // makes `<teleport :to="null">` fail for the lifetime of the instance.
+        const teleportRoot = ref(null);
+        onMounted(() => {
+            const doc = wwLib.getFrontDocument();
+            teleportRoot.value = doc?.querySelector('#app') ?? doc?.body ?? null;
+        });
+        const teleportTarget = computed(() => teleportRoot.value || 'body');
         const dropdownId = `combobox-${props.uid}`;
 
         // Teleporting moves the option dropzone out of the component's DOM subtree,
@@ -283,6 +309,7 @@ export default {
         // containment. Keep the dropdown in place while the dropzone is being
         // authored — the front bundle always teleports.
         const isTeleportDisabled = computed(() => {
+            if (!teleportRoot.value) return true;
             /* wwEditor:start */
             if (isEditing.value && hasCustomOptionContent.value) return true;
             /* wwEditor:end */
@@ -306,10 +333,16 @@ export default {
             size({
                 apply({ availableHeight, rects, elements }) {
                     const floating = elements.floating;
-                    const maxH = parseFloat(props.content?.dropdownMaxHeight) || 300;
-                    floating.style.maxHeight = `${Math.min(availableHeight - 8, maxH)}px`;
+                    // `min()` keeps the authored unit intact — parseFloat() used to
+                    // turn "50vh" into 50px, collapsing the dropdown to a sliver.
+                    const maxH = props.content?.dropdownMaxHeight || '300px';
+                    floating.style.maxHeight = `min(${Math.max(availableHeight - 8, 0)}px, ${maxH})`;
                     if ((props.content?.dropdownWidth || 'match') !== 'auto') {
                         floating.style.width = `${rects.reference.width}px`;
+                    } else {
+                        // Clear the previous match-trigger width, or switching to
+                        // "Auto" while open leaves the old inline width pinned.
+                        floating.style.width = '';
                     }
                     const minW = props.content?.dropdownMinWidth || '0px';
                     floating.style.minWidth = minW;
@@ -523,6 +556,28 @@ export default {
         const placeholderText = computed(() => wwLib.wwLang?.getText(props.content?.placeholder) || '');
         const emptyText = computed(() => wwLib.wwLang?.getText(props.content?.emptyStateText) || 'No results found.');
 
+        // ── Accessible names ──────────────────────────────────────────────────
+        // Derived, not just asked for: authors leave label properties on their
+        // default, which makes every instance announce identically.
+        // Both sources are bindable, so neither is guaranteed to be a string.
+        const asName = v => (v === null || v === undefined ? '' : String(v).trim());
+        const accessibleName = computed(
+            () =>
+                asName(wwLib.wwLang?.getText(props.content?.ariaLabel)) ||
+                asName(props.content?.fieldName) ||
+                asName(props.wwElementState?.name) ||
+                'Combobox'
+        );
+        const clearLabel = computed(
+            () => wwLib.wwLang?.getText(props.content?.clearAriaLabel) || 'Clear selection'
+        );
+        const toggleLabel = computed(
+            () => wwLib.wwLang?.getText(props.content?.toggleAriaLabel) || 'Show options'
+        );
+        const removeChipLabel = computed(
+            () => wwLib.wwLang?.getText(props.content?.removeChipAriaLabel) || 'Remove'
+        );
+
         const allowCreate = computed(() => props.content?.allowCreate || false);
         const createOptionText = computed(() => {
             const template = wwLib.wwLang?.getText(props.content?.createOptionLabel) || 'Create "{query}"';
@@ -564,20 +619,13 @@ export default {
 
         function setFocused(focused) {
             isReallyFocused.value = focused;
-            if (focused) {
-                emit('add-state', 'focus');
-                if (isFocusVisible.value) emit('add-state', 'focus-visible');
-            } else {
-                emit('remove-state', 'focus');
-                emit('remove-state', 'focus-visible');
-                isFocusVisible.value = false;
-            }
+            emit(focused ? 'add-state' : 'remove-state', 'focus');
         }
 
-        // ── Sync disabled / readonly / invalid WeWeb states ───────────────────
+        // ── Sync disabled / readonly / error WeWeb states ─────────────────────
         watch(isDisabled, val => { emit(val ? 'add-state' : 'remove-state', 'disabled'); }, { immediate: true });
         watch(isReadonly, val => { emit(val ? 'add-state' : 'remove-state', 'readonly'); }, { immediate: true });
-        watch(isInvalid, val => { emit(val ? 'add-state' : 'remove-state', 'invalid'); }, { immediate: true });
+        watch(isInvalid, val => { emit(val ? 'add-state' : 'remove-state', 'error'); }, { immediate: true });
 
         // ── Open / close ──────────────────────────────────────────────────────
         function openDropdown() {
@@ -619,7 +667,9 @@ export default {
             // selection or -1), so it must run before we highlight the first match
             // or it would clobber it.
             if (!isOpen.value) openDropdown();
-            activeIndex.value = filteredOptions.value.length > 0 ? 0 : -1;
+            // `showCreateOption` counts too: when the query matches nothing, the
+            // "Create …" row sits at index 0 and Enter must be able to reach it.
+            activeIndex.value = filteredOptions.value.length > 0 || showCreateOption.value ? 0 : -1;
             emit('trigger-event', { name: 'search', event: { value: event.target.value } });
         }
 
@@ -628,7 +678,6 @@ export default {
         }
 
         function handleFocus() {
-            isFocusVisible.value = true;
             const wasFocused = isReallyFocused.value;
             setFocused(true);
             if (!wasFocused) {
@@ -656,8 +705,11 @@ export default {
             }
         }
 
+        let blurTimer = null;
         function handleBlur() {
-            setTimeout(() => {
+            if (blurTimer !== null) clearTimeout(blurTimer);
+            blurTimer = setTimeout(() => {
+                blurTimer = null;
                 const doc = wwLib.getFrontDocument();
                 const focused = doc.activeElement;
                 const drop = dropdownRef.value;
@@ -700,12 +752,22 @@ export default {
             }
         }
 
-        function clearValue() {
+        // Silent reset: no focus grab, no dropdown. This is what a workflow or a
+        // form reset wants — popping the dropdown open from a background action
+        // would steal focus from wherever the user actually is.
+        function resetValue() {
             const next = isMultiple.value ? [] : null;
             setValue(next);
             inputText.value = '';
             isTyping.value = false;
             emit('trigger-event', { name: 'change', event: { value: next } });
+            return next;
+        }
+
+        // Clear button: the user is already here, so keep them in the field and
+        // reopen so they can pick again straight away.
+        function clearValue() {
+            resetValue();
             nextTick(() => {
                 inputRef.value?.focus();
                 openDropdown();
@@ -776,6 +838,9 @@ export default {
                     }
                     break;
                 case 'Escape':
+                    // Only swallow Escape when there is a dropdown to dismiss —
+                    // otherwise it must keep bubbling to an enclosing modal.
+                    if (!isOpen.value) break;
                     event.preventDefault();
                     closeDropdown();
                     inputRef.value?.focus();
@@ -786,12 +851,24 @@ export default {
             }
         }
 
+        // Scroll the options container by hand rather than with scrollIntoView():
+        // scrollIntoView() walks every scrollable ancestor, so on a teleported
+        // dropdown it scrolls the page out from under the open combobox.
         function scrollActiveOptionIntoView() {
             nextTick(() => {
+                const container = optionsRef.value;
+                if (!container || activeIndex.value < 0) return;
                 const isCreate = showCreateOption.value && activeIndex.value === filteredOptions.value.length;
                 const id = isCreate ? `${dropdownId}-opt-create` : `${dropdownId}-opt-${activeIndex.value}`;
-                const el = wwLib.getFrontDocument().getElementById(id);
-                el?.scrollIntoView({ block: 'nearest' });
+                const el = container.querySelector(`[id="${id}"]`);
+                if (!el) return;
+                const top = el.offsetTop;
+                const bottom = top + el.offsetHeight;
+                if (top < container.scrollTop) {
+                    container.scrollTop = top;
+                } else if (bottom > container.scrollTop + container.clientHeight) {
+                    container.scrollTop = bottom - container.clientHeight;
+                }
             });
         }
 
@@ -810,6 +887,7 @@ export default {
 
         onBeforeUnmount(() => {
             wwLib.getFrontDocument().removeEventListener('mousedown', handleClickOutside, true);
+            if (blurTimer !== null) clearTimeout(blurTimer);
         });
 
         // ── Form integration ──────────────────────────────────────────────────
@@ -828,7 +906,8 @@ export default {
 
         // ── CSS variables ─────────────────────────────────────────────────────
         const triggerCssVars = computed(() => ({
-            '--placeholder-color': props.content?.placeholderColor || '#9ca3af',
+            '--focus-ring': props.content?.focusRingColor || '#2563eb',
+            '--placeholder-color': props.content?.placeholderColor || '#6b7280',
             '--icon-color': props.content?.iconColor || '#6b7280',
             '--icon-size': props.content?.iconSize || '16px',
             '--chevron-btn-bg': isChevronHovered.value
@@ -896,16 +975,16 @@ export default {
         const localSearchQuery = computed(() => (isTyping.value ? inputText.value : ''));
         const localOptions = computed(() => processedOptions.value.map(({ _uid, ...o }) => o));
 
-        const localData = ref({
-            value: variableValue,
-            label: selectedLabel,
-            selectedOption: localSelectedOption,
-            selectedOptions: localSelectedOptions,
-            multiple: isMultiple,
-            isOpen,
-            searchQuery: localSearchQuery,
-            options: localOptions,
-        });
+        const localData = computed(() => ({
+            value: variableValue.value,
+            label: selectedLabel.value,
+            selectedOption: localSelectedOption.value,
+            selectedOptions: localSelectedOptions.value,
+            multiple: isMultiple.value,
+            isOpen: isOpenEffective.value,
+            searchQuery: localSearchQuery.value,
+            options: localOptions.value,
+        }));
 
         const localMarkdown = `### Combobox local information
 
@@ -941,7 +1020,9 @@ context.local.data?.['combobox']?.['isOpen']
 \`\`\`
 `;
 
-        wwLib.wwElement.useRegisterElementLocalContext('combobox', localData.value, {}, localMarkdown);
+        // Pass the computed itself — `.value` here hands consumers a frozen
+        // snapshot and the exposed state stops updating after mount.
+        wwLib.wwElement.useRegisterElementLocalContext('combobox', localData, {}, localMarkdown);
 
         // ── Workflow actions ───────────────────────────────────────────────────
         function actionOpenDropdown() { openDropdown(); }
@@ -970,12 +1051,13 @@ context.local.data?.['combobox']?.['isOpen']
             }
         }
 
-        function actionResetValue() { clearValue(); }
+        function actionResetValue() { resetValue(); }
         function actionFocus() { inputRef.value?.focus(); }
 
         return {
             triggerRef,
             dropdownRef,
+            optionsRef,
             inputRef,
             isOpen,
             isOpenEffective,
@@ -1000,7 +1082,11 @@ context.local.data?.['combobox']?.['isOpen']
             activeDescendantId,
             variableValue,
             fieldNameValue,
-            appRoot,
+            teleportTarget,
+            accessibleName,
+            clearLabel,
+            toggleLabel,
+            removeChipLabel,
             showCreateOption,
             createOptionText,
             selectCreateOption,
@@ -1047,6 +1133,13 @@ context.local.data?.['combobox']?.['isOpen']
     align-items: center;
     cursor: text;
     width: 100%;
+
+    // The inputs clear their own outline, so the keyboard ring is drawn on the
+    // field as a whole. :focus-visible keeps it off mouse clicks (WCAG 2.4.7).
+    &:has(.combobox__input:focus-visible) {
+        outline: 2px solid var(--focus-ring, #2563eb);
+        outline-offset: 2px;
+    }
 
     &.is-disabled {
         opacity: 0.5;
@@ -1168,6 +1261,11 @@ context.local.data?.['combobox']?.['isOpen']
         padding: 0;
         margin: 0;
         transition: background 0.21s ease;
+
+        &:focus-visible {
+            outline: 2px solid var(--focus-ring, #2563eb);
+            outline-offset: 1px;
+        }
     }
 
     &__clear-btn {
@@ -1218,6 +1316,9 @@ context.local.data?.['combobox']?.['isOpen']
     overflow: hidden;
 
     .combobox__options {
+        // Positioned so it is the offsetParent of the rows — scrollActiveOption-
+        // IntoView() measures offsetTop against this container.
+        position: relative;
         overflow-y: auto;
         padding: var(--dropdown-padding, 4px);
         max-height: inherit;
