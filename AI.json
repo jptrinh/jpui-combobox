@@ -1,0 +1,715 @@
+{
+    "metadata": {
+        "advanced": true,
+        "name": "jpui-combobox",
+        "description": "A searchable select (combobox): a text input that filters a list of options in a floating dropdown. Supports single and multiple selection (multiple renders removable chips inside the field), an optional \"Create \\\"{query}\\\"\" row for values that don't exist yet, formula-based field mapping for arbitrary option shapes, and full keyboard navigation. The dropdown is teleported out of the component so it is never clipped by an ancestor with `overflow: hidden`. Integrates with WeWeb forms via `fieldName` / `validation`. The option row can be replaced by an authored layout through the `optionElement` dropzone.",
+        "keywords": [
+            "combobox",
+            "select",
+            "autocomplete",
+            "search",
+            "dropdown",
+            "multiselect",
+            "typeahead",
+            "tags",
+            "chips"
+        ],
+        "features": [
+            "Single and multiple selection — multiple renders removable chips in the field",
+            "Type-to-filter search over the option labels",
+            "Optional \"Create\" row when the query matches no existing option (emits `create`; you own persistence)",
+            "Formula field mapping (`mappingLabel` / `mappingValue` / `mappingDisabled`) for any option shape",
+            "Custom option content: enable `customOptionContent` and author one row in the `optionElement` dropzone, repeated per option with `context.item.data.label` / `context.item.data.value`",
+            "Floating dropdown positioned with Floating UI (flip / shift / size), teleported so it escapes `overflow: hidden` ancestors",
+            "WeWeb form integration: `fieldName`, `required`, `customValidation`, `validation`, form reset",
+            "Keyboard: ArrowUp/ArrowDown to move, Enter to select, Escape to close, Backspace to remove the last chip",
+            "LocalContext `combobox` exposing value, label, selection details, search query and open state",
+            "Actions: open / close / toggle the dropdown, set value, reset value, focus"
+        ]
+    },
+    "properties": [
+        {
+            "name": "choices",
+            "description": "The options. Default shape `[{ label, value, disabled? }]`. Bind any array and use `mappingLabel` / `mappingValue` / `mappingDisabled` to point at your own fields.",
+            "type": "array",
+            "defaultValue": [
+                { "label": "Apple", "value": "apple" },
+                { "label": "Banana", "value": "banana" },
+                { "label": "Cherry", "value": "cherry" }
+            ]
+        },
+        {
+            "name": "mappingLabel",
+            "description": "Formula resolving the display label of one option. Only shown when `choices` is bound. Defaults to `context.mapping?.['label']`.",
+            "type": "formula"
+        },
+        {
+            "name": "mappingValue",
+            "description": "Formula resolving the stored value of one option. Only shown when `choices` is bound. Defaults to `context.mapping?.['value']`.",
+            "type": "formula"
+        },
+        {
+            "name": "mappingDisabled",
+            "description": "Formula resolving whether one option is unselectable. Only shown when `choices` is bound. Defaults to `context.mapping?.['disabled']`.",
+            "type": "formula"
+        },
+        {
+            "name": "initValue",
+            "description": "Seed value. Single mode: one option value, e.g. `'apple'`. Multiple mode: an array of values, e.g. `['apple', 'banana']`. Changing it resets the internal `value` variable and fires `initValueChange`.",
+            "type": "any",
+            "defaultValue": null
+        },
+        {
+            "name": "multiple",
+            "description": "Allow selecting several options. Selections render as removable chips inside the field and `value` becomes an array.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "placeholder",
+            "description": "Placeholder shown while nothing is selected. Multilang.",
+            "type": "string",
+            "defaultValue": "Search..."
+        },
+        {
+            "name": "emptyStateText",
+            "description": "Text shown in the dropdown when no option matches the query. Multilang.",
+            "type": "string",
+            "defaultValue": "No results found."
+        },
+        {
+            "name": "allowCreate",
+            "description": "Show a create row when the typed query has no exact label match. Selecting it fires the `create` event — the component does NOT add the option itself, you push it into `choices`.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "createOptionLabel",
+            "description": "Label of the create row. `{query}` is replaced by the typed text. Only shown when `allowCreate` is on. Multilang.",
+            "type": "string",
+            "defaultValue": "Create \"{query}\""
+        },
+        {
+            "name": "clearable",
+            "description": "Show a clear (×) button when a value is selected. Note the clear button replaces the chevron while a value is set.",
+            "type": "boolean",
+            "defaultValue": true
+        },
+        {
+            "name": "closeOnSelect",
+            "description": "Close the dropdown after a selection. Single mode only — multiple mode always stays open.",
+            "type": "boolean",
+            "defaultValue": true
+        },
+        {
+            "name": "disabled",
+            "description": "Disable the whole combobox. Activates the `disabled` state.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "readonly",
+            "description": "Show the value but block interaction. Activates the `readonly` state.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "invalid",
+            "description": "Mark the field as invalid. Sets `aria-invalid` and activates the `error` state.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "required",
+            "description": "Make the field required for form validation.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "ariaLabel",
+            "description": "Screen-reader name for the combobox. Falls back to the form field name, then the element name in the navigator, then 'Combobox'. Multilang.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "clearAriaLabel",
+            "description": "Screen-reader name for the clear (×) button. Multilang.",
+            "type": "string",
+            "defaultValue": "Clear selection"
+        },
+        {
+            "name": "toggleAriaLabel",
+            "description": "Screen-reader name for the chevron button. Multilang.",
+            "type": "string",
+            "defaultValue": "Show options"
+        },
+        {
+            "name": "removeChipAriaLabel",
+            "description": "Prefix for the chip remove button — 'Remove' announces as 'Remove Banana'. Multiple mode only. Multilang.",
+            "type": "string",
+            "defaultValue": "Remove"
+        },
+        {
+            "name": "fieldName",
+            "description": "Name of the field inside a WeWeb form. Only shown when the element sits in a form.",
+            "type": "string",
+            "defaultValue": ""
+        },
+        {
+            "name": "customValidation",
+            "description": "Enable a custom validation formula instead of the built-in required check.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "validation",
+            "description": "Formula returning true when the value is valid. Only used when `customValidation` is on.",
+            "type": "formula"
+        },
+        {
+            "name": "customOptionContent",
+            "description": "Replace the built-in option row (label + checked icon) with your own layout authored in the `optionElement` dropzone. Bind text/images to `context.item.data.label` and `context.item.data.value`. Hides `optionIcon` / `optionIconColor` / `optionIconSize`, which have nothing to drive once the row is yours.",
+            "type": "boolean",
+            "defaultValue": false
+        },
+        {
+            "name": "side",
+            "description": "Preferred dropdown placement. Flips automatically when there is no room.",
+            "type": "string",
+            "defaultValue": "bottom-start",
+            "options": ["bottom-start", "bottom", "bottom-end", "top-start", "top", "top-end"]
+        },
+        {
+            "name": "offsetY",
+            "description": "Gap in px between the field and the dropdown.",
+            "type": "number",
+            "defaultValue": 4
+        },
+        {
+            "name": "dropdownWidth",
+            "description": "`match` pins the dropdown to the field width; `auto` lets it size to its content.",
+            "type": "string",
+            "defaultValue": "match",
+            "options": ["match", "auto"]
+        },
+        {
+            "name": "dropdownMinWidth",
+            "description": "Minimum dropdown width.",
+            "type": "string",
+            "defaultValue": "0px"
+        },
+        {
+            "name": "dropdownMaxHeight",
+            "description": "Maximum dropdown height. Accepts px or vh; the dropdown also shrinks to the space actually available.",
+            "type": "string",
+            "defaultValue": "300px"
+        },
+        {
+            "name": "dropdownBgColor",
+            "description": "Dropdown background.",
+            "type": "string",
+            "defaultValue": "#ffffff"
+        },
+        {
+            "name": "dropdownBorderAll",
+            "description": "Dropdown border, as a CSS shorthand string.",
+            "type": "string",
+            "defaultValue": "1px solid #e5e7eb"
+        },
+        {
+            "name": "dropdownBorderRadius",
+            "description": "Dropdown corner radius.",
+            "type": "string",
+            "defaultValue": "6px"
+        },
+        {
+            "name": "dropdownPadding",
+            "description": "Padding around the option list.",
+            "type": "string",
+            "defaultValue": "4px"
+        },
+        {
+            "name": "dropdownShadow",
+            "description": "Dropdown box-shadow.",
+            "type": "string",
+            "defaultValue": "0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1)"
+        },
+        {
+            "name": "zIndex",
+            "description": "Stacking order of the teleported dropdown.",
+            "type": "number",
+            "defaultValue": 9999
+        },
+        {
+            "name": "inputFontSize",
+            "description": "Font size of the input text.",
+            "type": "string",
+            "defaultValue": "16px"
+        },
+        {
+            "name": "inputFontWeight",
+            "description": "Font weight of the input text (100–900).",
+            "type": "number",
+            "defaultValue": 400
+        },
+        {
+            "name": "inputTextColor",
+            "description": "Color of the text in the input.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "placeholderColor",
+            "description": "Placeholder color. Default is #6b7280 (4.83:1 on white) — lighter grays fail WCAG AA for text.",
+            "type": "string",
+            "defaultValue": "#6b7280"
+        },
+        {
+            "name": "focusRingColor",
+            "description": "Keyboard-only focus outline (:focus-visible) drawn around the field and the icon buttons. Never appears on mouse click. Set it transparent if you style focus yourself via the `focus` state.",
+            "type": "string",
+            "defaultValue": "#2563eb"
+        },
+        {
+            "name": "iconColor",
+            "description": "Color of the chevron and clear icons.",
+            "type": "string",
+            "defaultValue": "#6b7280"
+        },
+        {
+            "name": "iconSize",
+            "description": "Size of the chevron and clear icons.",
+            "type": "string",
+            "defaultValue": "16px"
+        },
+        {
+            "name": "chevronIconClosed",
+            "description": "System icon code shown while the dropdown is closed, e.g. `\"fas fa-chevron-down\"`. Empty uses a built-in chevron.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "chevronIconOpen",
+            "description": "System icon code shown while the dropdown is open. Leave empty to reuse the closed icon rotated 180°.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "iconBtnBg",
+            "description": "Background of the chevron and clear buttons.",
+            "type": "string",
+            "defaultValue": "transparent"
+        },
+        {
+            "name": "iconBtnBgHover",
+            "description": "Hover background of the chevron and clear buttons.",
+            "type": "string",
+            "defaultValue": "transparent"
+        },
+        {
+            "name": "iconBtnBorderRadius",
+            "description": "Corner radius of the chevron and clear buttons.",
+            "type": "string",
+            "defaultValue": "4px"
+        },
+        {
+            "name": "optionFontSize",
+            "description": "Font size of the option rows.",
+            "type": "string",
+            "defaultValue": "16px"
+        },
+        {
+            "name": "optionFontWeight",
+            "description": "Font weight of the option rows (100–900).",
+            "type": "number",
+            "defaultValue": 400
+        },
+        {
+            "name": "optionFontColor",
+            "description": "Default option text color.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "optionBgColor",
+            "description": "Default option background.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "optionBgColorHover",
+            "description": "Option background while hovered or keyboard-focused.",
+            "type": "string",
+            "defaultValue": "#f3f4f6"
+        },
+        {
+            "name": "optionBgColorSelected",
+            "description": "Option background when selected.",
+            "type": "string",
+            "defaultValue": "#f3f4f6"
+        },
+        {
+            "name": "optionFontColorHover",
+            "description": "Option text color while hovered or keyboard-focused.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "optionFontColorSelected",
+            "description": "Option text color when selected.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "optionPadding",
+            "description": "Padding of each option row.",
+            "type": "string",
+            "defaultValue": "6px 8px"
+        },
+        {
+            "name": "optionBorderRadius",
+            "description": "Corner radius of each option row.",
+            "type": "string",
+            "defaultValue": "4px"
+        },
+        {
+            "name": "optionIcon",
+            "description": "System icon marking the selected option, e.g. `\"fas fa-check\"`. Hidden when `customOptionContent` is on.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "optionIconColor",
+            "description": "Color of the checked icon. Hidden when `customOptionContent` is on.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "optionIconSize",
+            "description": "Size of the checked icon. Hidden when `customOptionContent` is on.",
+            "type": "string",
+            "defaultValue": "14px"
+        },
+        {
+            "name": "emptyStateFontSize",
+            "description": "Font size of the empty-state text.",
+            "type": "string",
+            "defaultValue": "14px"
+        },
+        {
+            "name": "emptyStateFontColor",
+            "description": "Color of the empty-state text.",
+            "type": "string",
+            "defaultValue": "#6b7280"
+        },
+        {
+            "name": "emptyStatePadding",
+            "description": "Padding of the empty-state row.",
+            "type": "string",
+            "defaultValue": "8px 12px"
+        },
+        {
+            "name": "createOptionFontSize",
+            "description": "Font size of the create row.",
+            "type": "string",
+            "defaultValue": "16px"
+        },
+        {
+            "name": "createOptionFontWeight",
+            "description": "Font weight of the create row (100–900).",
+            "type": "number",
+            "defaultValue": 500
+        },
+        {
+            "name": "createOptionFontColor",
+            "description": "Text color of the create row.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "createOptionBgColor",
+            "description": "Background of the create row.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "createOptionBgColorHover",
+            "description": "Background of the create row while hovered or keyboard-focused.",
+            "type": "string",
+            "defaultValue": "#f3f4f6"
+        },
+        {
+            "name": "optionCheckmarkColor",
+            "description": "Color of the create row's icon. Legacy key name — the label in the editor is 'Create icon color'.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "createOptionIcon",
+            "description": "System icon of the create row, e.g. `\"fas fa-plus\"`.",
+            "type": "string",
+            "defaultValue": null
+        },
+        {
+            "name": "createOptionIconSize",
+            "description": "Size of the create row's icon.",
+            "type": "string",
+            "defaultValue": "14px"
+        },
+        {
+            "name": "chipBgColor",
+            "description": "Chip background. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "#f3f4f6"
+        },
+        {
+            "name": "chipTextColor",
+            "description": "Chip text color. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "chipFontSize",
+            "description": "Chip font size. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "14px"
+        },
+        {
+            "name": "chipFontWeight",
+            "description": "Chip font weight (100–900). Multiple mode only.",
+            "type": "number",
+            "defaultValue": 400
+        },
+        {
+            "name": "chipHeight",
+            "description": "Chip height, or 'auto' to size to content. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "auto"
+        },
+        {
+            "name": "chipBorderRadius",
+            "description": "Chip corner radius. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "4px"
+        },
+        {
+            "name": "chipPadding",
+            "description": "Chip padding. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "2px 6px"
+        },
+        {
+            "name": "chipGap",
+            "description": "Gap between chips. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "4px"
+        },
+        {
+            "name": "chipContentGap",
+            "description": "Gap between a chip's label and its remove icon. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "4px"
+        },
+        {
+            "name": "chipRemoveIconColor",
+            "description": "Color of the chip remove (×) icon. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "#6b7280"
+        },
+        {
+            "name": "chipRemoveIconColorHover",
+            "description": "Hover color of the chip remove (×) icon. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "#111827"
+        },
+        {
+            "name": "chipRemoveIconSize",
+            "description": "Size of the chip remove (×) icon. Multiple mode only.",
+            "type": "string",
+            "defaultValue": "14px"
+        }
+    ],
+    "states": [
+        {
+            "name": "focus",
+            "description": "Active while the field or one of its buttons holds focus."
+        },
+        {
+            "name": "disabled",
+            "description": "Active while the `disabled` property is on."
+        },
+        {
+            "name": "readonly",
+            "description": "Active while the `readonly` property is on."
+        },
+        {
+            "name": "error",
+            "description": "Active while the `invalid` property is on. Note the state is named `error` even though the property is named `invalid` — that is WeWeb's state vocabulary."
+        }
+    ],
+    "events": [
+        {
+            "name": "change",
+            "description": "Fires whenever the selection changes — picking an option, removing a chip, clearing, or a Set value / Reset value action. In multiple mode the payload is the full array.",
+            "payload": { "value": "any | any[]" }
+        },
+        {
+            "name": "initValueChange",
+            "description": "Fires when `initValue` changes (and once on mount) after the internal `value` variable has been reset to it.",
+            "payload": { "value": "any | any[]" }
+        },
+        {
+            "name": "focus",
+            "description": "Fires when focus enters the field. Does not re-fire when focus moves between the input and the icon buttons.",
+            "payload": null
+        },
+        {
+            "name": "blur",
+            "description": "Fires once focus has left the field and the dropdown.",
+            "payload": null
+        },
+        {
+            "name": "dropdownOpen",
+            "description": "Fires when the dropdown opens.",
+            "payload": null
+        },
+        {
+            "name": "dropdownClose",
+            "description": "Fires when the dropdown closes.",
+            "payload": null
+        },
+        {
+            "name": "search",
+            "description": "Fires on every keystroke in the input. Use it to drive a server-side query and rebind `choices`.",
+            "payload": { "value": "string" }
+        },
+        {
+            "name": "create",
+            "description": "Fires when the create row is selected. The component does NOT add the option — append it to your `choices` source yourself, then set the value.",
+            "payload": { "value": "string (the trimmed query)" }
+        },
+        {
+            "name": "chipRemove",
+            "description": "Fires when a chip is removed, in addition to `change`. Multiple mode only.",
+            "payload": { "value": "any (the removed option value)" }
+        }
+    ],
+    "actions": [
+        {
+            "label": "Open",
+            "actionName": "actionOpenDropdown",
+            "description": "Open the dropdown. No-op while disabled or readonly.",
+            "args": []
+        },
+        {
+            "label": "Close",
+            "actionName": "actionCloseDropdown",
+            "description": "Close the dropdown and discard the current search query.",
+            "args": []
+        },
+        {
+            "label": "Toggle",
+            "actionName": "actionToggleDropdown",
+            "description": "Open the dropdown if closed, close it if open.",
+            "args": []
+        },
+        {
+            "label": "Set value",
+            "actionName": "actionSetValue",
+            "description": "Set the selection programmatically and fire `change`. A value matching no option is still stored, so you can drive the field from data that has not loaded yet.",
+            "args": [
+                {
+                    "name": "Value",
+                    "type": "any",
+                    "description": "One option value in single mode, an array of values in multiple mode."
+                }
+            ]
+        },
+        {
+            "label": "Reset value",
+            "actionName": "actionResetValue",
+            "description": "Clear the selection and fire `change`. Does not focus the field or open the dropdown — use Focus / Open for that.",
+            "args": []
+        },
+        {
+            "label": "Focus",
+            "actionName": "actionFocus",
+            "description": "Move keyboard focus into the search input without opening the dropdown.",
+            "args": []
+        }
+    ],
+    "variables": [
+        {
+            "name": "value",
+            "description": "The current selection. A single option value in single mode, an array of values in multiple mode. Writable through the Set value / Reset value actions and used as the form field value.",
+            "type": "any",
+            "readonly": false
+        }
+    ],
+    "localContext": [
+        {
+            "path": "combobox",
+            "type": "object",
+            "description": "Live component state for formulas and workflows.",
+            "content": {
+                "value": {
+                    "type": "any",
+                    "description": "The selected value, or array of values in multiple mode."
+                },
+                "label": {
+                    "type": "string",
+                    "description": "Label of the selected option; comma-joined labels in multiple mode."
+                },
+                "selectedOption": {
+                    "type": "object",
+                    "description": "`{ value, label }` of the selection, or null. Always null in multiple mode."
+                },
+                "selectedOptions": {
+                    "type": "array",
+                    "description": "`[{ value, label }]`. Always empty when multiple is off."
+                },
+                "multiple": { "type": "boolean", "description": "Whether multiple selection is enabled." },
+                "isOpen": { "type": "boolean", "description": "Whether the dropdown is open." },
+                "searchQuery": {
+                    "type": "string",
+                    "description": "Text currently being typed; empty string when not searching."
+                },
+                "options": {
+                    "type": "array",
+                    "description": "All resolved options `[{ value, label, disabled }]` after field mapping."
+                }
+            }
+        }
+    ],
+    "slots": [
+        {
+            "name": "optionElement",
+            "description": "Dropzone holding ONE authored option row, repeated for every option in the dropdown. Only rendered when `customOptionContent` is on. Inside it, bind to `context.item.data.label` and `context.item.data.value`. Elements dropped here replace the built-in label + checked icon entirely, so re-add a selected-state affordance yourself if you need one. Arrives empty and unstyled — a seeded container cannot carry styles in a coded component."
+        }
+    ],
+    "specifications": [
+        "The `create` row does NOT add an option. Selecting it only fires the `create` event — wire a workflow that appends the value to whatever backs `choices`, otherwise the row appears to do nothing.",
+        "The clear (×) button REPLACES the chevron while a value is selected — the two are never visible at the same time. If you want a permanent dropdown affordance, turn `clearable` off.",
+        "Server-side search: bind `choices` to a collection and re-fetch on the `search` event. The component also filters locally on the label, so a server that already filtered will simply match everything.",
+        "`initValue` must contain option VALUES, not labels — and an array in multiple mode. A value with no matching option leaves the field showing the raw value.",
+        "Field mapping properties (`mappingLabel` and friends) only appear once `choices` is BOUND to data. With hand-entered options the editor hides them and the built-in `label` / `value` / `disabled` keys are used.",
+        "The dropdown is teleported outside the component, so page-level CSS targeting a parent will not reach it. Style it through the Dropdown / Option style properties instead.",
+        "Elements dropped into `optionElement` must not be focusable or clickable in a way that swallows the row click — the row itself handles selection.",
+        "The `invalid` PROPERTY drives the state named `error`. Style invalid instances by selecting the `error` state, not `invalid`."
+    ],
+    "examples": [
+        {
+            "description": "Single select over hand-entered options, closing on select.",
+            "example": "{\"choices\":[{\"label\":\"Apple\",\"value\":\"apple\"},{\"label\":\"Banana\",\"value\":\"banana\"}],\"initValue\":\"apple\",\"placeholder\":\"Search fruit...\",\"clearable\":true,\"closeOnSelect\":true}"
+        },
+        {
+            "description": "Multi-select tag picker with chips and a create row.",
+            "example": "{\"multiple\":true,\"allowCreate\":true,\"createOptionLabel\":\"Create tag \\\"{query}\\\"\",\"initValue\":[\"design\",\"research\"],\"placeholder\":\"Add tags...\",\"chipBgColor\":\"#eef2ff\",\"chipTextColor\":\"#3730a3\"}"
+        },
+        {
+            "description": "Bound to a collection with a custom option shape, inside a form.",
+            "example": "{\"choices\":\"[bound to collection users]\",\"mappingLabel\":\"context.mapping?.['full_name']\",\"mappingValue\":\"context.mapping?.['id']\",\"fieldName\":\"assignee\",\"required\":true,\"ariaLabel\":\"Assignee\"}"
+        }
+    ],
+    "dependencies": ["@floating-ui/vue"]
+}
