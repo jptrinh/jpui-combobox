@@ -5,16 +5,17 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 ## Features
 
 - **Type-ahead search** — filters options as the user types
-- **Keyboard navigation** — Arrow keys, Enter, Escape, Tab all work as expected
-- **ARIA-compliant** — `role="combobox"`, `aria-expanded`, `aria-activedescendant`, `aria-invalid`
+- **Single or multiple** — multiple selection renders removable chips inside the field
+- **Keyboard navigation** — Arrow keys, Enter, Escape, Tab all work as expected; Backspace removes the last chip
+- **ARIA-compliant** — `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, `aria-invalid`, named buttons, and a keyboard-only focus ring
 - **Floating dropdown** — powered by Floating UI with auto-flip and scroll-shift
 - **Clear button** — optional one-click reset
 - **Create option** — lets users create new values when no match is found
 - **Custom option content** — swap the built-in option row for your own dropzone layout, repeated per option
 - **Form integration** — registers with WeWeb form elements for validation and submission
 - **Workflow actions** — open, close, toggle, set value, reset, focus
-- **Local context** — exposes `value`, `label`, `selectedOption`, `isOpen`, `searchQuery`, and `options` to the formula editor
-- **States** — `focus`, `focus-visible`, `disabled`, `readonly`, `invalid` for style targeting
+- **Local context** — exposes `value`, `label`, `selectedOption`, `selectedOptions`, `multiple`, `isOpen`, `searchQuery`, and `options` to the formula editor
+- **States** — `focus`, `disabled`, `readonly`, `error` for style targeting
 
 ## Settings
 
@@ -24,7 +25,8 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Label field | Formula | Maps the display label from a bound data source |
 | Value field | Formula | Maps the stored value from a bound data source |
 | Disabled field | Formula | Maps the disabled flag from a bound data source |
-| Init value | Text | Pre-selects an option on mount |
+| Init value | Text | Pre-selects an option on mount. Option **values**, not labels — an array in multiple mode |
+| Multiple | On/Off | Allow several selections, shown as removable chips. `value` becomes an array |
 | Placeholder | Text | Input placeholder (multi-language) |
 | Empty state text | Text | Message shown when no options match the search |
 | Allow create | On/Off | Show a "Create" option when no option exactly matches the typed query |
@@ -33,8 +35,15 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Close on select | On/Off | Close the dropdown after picking an option |
 | Disabled | On/Off | Disable the entire combobox |
 | Read only | On/Off | Show the value without allowing changes |
-| Invalid | On/Off | Apply the `invalid` state for validation styling |
+| Invalid | On/Off | Sets `aria-invalid` and applies the **`error`** state for validation styling |
 | Required | On/Off | Mark the field as required for form submission |
+| Accessible label | Text | Screen-reader name. Falls back to the form field name, then the element name |
+| Clear button label | Text | Screen-reader name for the × button |
+| Toggle button label | Text | Screen-reader name for the chevron button |
+| Remove chip label | Text | Prefix for chip remove buttons — "Remove" announces as "Remove Banana" |
+
+> The **Invalid** property drives the state named **`error`** (WeWeb's own vocabulary
+> has no `invalid` state). Select `error` in the state picker to style invalid fields.
 
 ## Custom option content
 
@@ -64,11 +73,16 @@ Turning the toggle back off keeps the dropped elements — they stay stored on t
 
 The dropdown is fully customisable from the style panel, grouped into:
 
-- **Input** — font size, font weight, placeholder color, icon color, icon size, icon button background and border radius (default and hover)
+- **Input** — font size, font weight, placeholder color, focus ring color, icon color, icon size, chevron icons (closed/open), icon button background and border radius (default and hover)
 - **Dropdown** — position, offset, width, max height, background, border, radius, padding, shadow, z-index
-- **Option** — custom content toggle (see above), font size, font weight, text color, background, hover/selected variants, padding, border radius, checkmark color
-- **Empty state** — text color, padding
-- **Create option** — font size, font weight, text color, background, hover background
+- **Option** — custom content toggle (see above), font size, font weight, text color, background, hover/selected variants, padding, border radius, checked icon (icon, color, size)
+- **Empty state** — font size, text color, padding
+- **Chips** *(multiple mode)* — background, text color, font size/weight, height, radius, padding, gap, label-to-icon gap, remove icon color/hover/size
+- **Create option** — font size, font weight, text color, background, hover background, create icon and its color/size
+
+**Focus ring color** draws a `:focus-visible` outline around the field and the icon
+buttons — keyboard only, never on mouse click. Set it to transparent if you'd rather
+style focus entirely through the `focus` state.
 
 ## Trigger events
 
@@ -82,6 +96,10 @@ The dropdown is fully customisable from the style panel, grouped into:
 | On dropdown close | — | Dropdown closes |
 | On search | `{ value }` | User types in the input |
 | On create | `{ value }` | User confirms a new value via the create option |
+| On chip remove | `{ value }` | A chip is removed (fires alongside On change). Multiple mode only |
+
+> **On create does not add the option.** It only reports the typed value — append it
+> to whatever backs **Options** in a workflow, then set the value.
 
 ## Workflow actions
 
@@ -90,8 +108,8 @@ The dropdown is fully customisable from the style panel, grouped into:
 | Open | — | Open the dropdown |
 | Close | — | Close the dropdown |
 | Toggle | — | Toggle open/closed |
-| Set value | `value` | Select an option by value |
-| Reset value | — | Clear the current selection |
+| Set value | `value` | Select an option by value (an array in multiple mode) |
+| Reset value | — | Clear the current selection. Does *not* focus the field or open the dropdown |
 | Focus | — | Focus the input |
 
 ## Local context
@@ -100,9 +118,11 @@ Access component state in formulas via `context.local.data?.['combobox']`:
 
 | Key | Type | Description |
 |---|---|---|
-| `value` | any | Currently selected value |
-| `label` | string | Display label of the selected option |
-| `selectedOption` | `{ value, label }` \| null | Full selected option object |
+| `value` | any | Currently selected value (array in multiple mode) |
+| `label` | string | Display label of the selected option (comma-joined in multiple mode) |
+| `selectedOption` | `{ value, label }` \| null | Full selected option object. Always `null` in multiple mode |
+| `selectedOptions` | `[{ value, label }]` | Selected options. Always empty when multiple is off |
+| `multiple` | boolean | Whether multiple selection is enabled |
 | `isOpen` | boolean | Whether the dropdown is open |
 | `searchQuery` | string | Text the user is currently typing |
 | `options` | array | All available options `[{ value, label, disabled }]` |
