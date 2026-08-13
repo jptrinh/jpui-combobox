@@ -618,6 +618,17 @@ export default {
             isClearHovered.value = false;
         }
 
+        // The clear and chevron buttons swap in and out as the value changes, so
+        // the one being unmounted never receives its `mouseleave` — without this
+        // its hover flag stays true and it remounts stuck in the hover style.
+        watch(
+            () => isClearable.value && hasValue.value,
+            () => {
+                isClearHovered.value = false;
+                isChevronHovered.value = false;
+            }
+        );
+
         // Delegate "was this focus keyboard-driven?" to the browser's own
         // :focus-visible heuristic rather than tracking modality by hand.
         // Duck-typed, never instanceof — the editor runs in a different realm.
@@ -789,14 +800,12 @@ export default {
             return next;
         }
 
-        // Clear button: the user is already here, so keep them in the field and
-        // reopen so they can pick again straight away.
+        // Clear button: the user is already here, so keep them in the field — but
+        // don't force the dropdown open. Clearing is its own action, not a request
+        // to browse options. An already-open dropdown stays open.
         function clearValue() {
             resetValue();
-            nextTick(() => {
-                inputRef.value?.focus();
-                openDropdown();
-            });
+            nextTick(() => inputRef.value?.focus());
         }
 
         function removeChip(option) {
