@@ -790,9 +790,16 @@ export default {
                 setValue(next);
                 inputText.value = '';
                 isTyping.value = false;
-                activeIndex.value = -1;
                 emit('trigger-event', { name: 'change', event: { value: next } });
-                nextTick(() => inputRef.value?.focus());
+                nextTick(() => {
+                    inputRef.value?.focus();
+                    // Keep the highlight on the row that was just toggled so the
+                    // keyboard user can carry on from there. Clearing the query
+                    // re-expands the list, so re-find the row instead of trusting
+                    // the index it had while the list was filtered.
+                    activeIndex.value = filteredOptions.value.findIndex(o => o._uid === option._uid);
+                    if (activeIndex.value >= 0) scrollActiveOptionIntoView();
+                });
                 return;
             }
 
