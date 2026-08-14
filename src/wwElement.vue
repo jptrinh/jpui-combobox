@@ -11,7 +11,7 @@
         @keydown="handleKeydown"
     >
         <!-- Field: chips (multiple) + search input -->
-        <div v-if="isMultiple" class="combobox__field">
+        <div v-if="isMultiple" class="combobox__field" @click.self="handleFieldClick">
             <span v-for="option in selectedOptions" :key="option._uid" class="combobox__chip">
                 <span class="combobox__chip-label">{{ option.label }}</span>
                 <button
@@ -32,6 +32,7 @@
             <input
                 ref="inputRef"
                 class="combobox__input combobox__input--multi"
+                :class="{ 'combobox__input--collapsed': isInputCollapsed }"
                 type="text"
                 autocomplete="off"
                 role="combobox"
@@ -442,6 +443,18 @@ export default {
             return variableValue.value !== null && variableValue.value !== undefined && variableValue.value !== '';
         });
 
+        // Idle multi-select input: chips already fill the row, so the input's
+        // 60px min-width would wrap it onto a second line and leave an empty
+        // strip under the chips. Collapse it to zero while it is unfocused and
+        // empty; clicking the field re-focuses it (handleFieldClick).
+        const isInputCollapsed = computed(
+            () =>
+                isMultiple.value &&
+                selectedOptions.value.length > 0 &&
+                !isReallyFocused.value &&
+                !inputText.value
+        );
+
         // Sync inputText ← selectedLabel when not actively typing
         watch(
             [selectedLabel, isTyping, isMultiple],
@@ -707,6 +720,14 @@ export default {
         }
 
         function handleInputClick() {
+            if (!isOpen.value) openDropdown();
+        }
+
+        // Empty space in the chip field (including the zero-width strip left by
+        // a collapsed input) has to behave like clicking the input itself.
+        function handleFieldClick() {
+            if (isDisabled.value || isReadonly.value) return;
+            inputRef.value?.focus();
             if (!isOpen.value) openDropdown();
         }
 
@@ -1102,6 +1123,7 @@ context.local.data?.['combobox']?.['isOpen']
             selectedOptions,
             hasValue,
             inputText,
+            isInputCollapsed,
             activeIndex,
             filteredOptions,
             hasCustomOptionContent,
@@ -1133,6 +1155,7 @@ context.local.data?.['combobox']?.['isOpen']
             dropdownCssVars,
             handleInput,
             handleInputClick,
+            handleFieldClick,
             handleFocus,
             handleBlur,
             handleChevronKeydown,
@@ -1205,6 +1228,14 @@ context.local.data?.['combobox']?.['isOpen']
             min-width: 60px;
             height: auto;
             align-self: stretch;
+        }
+
+        // Idle, empty and with chips present: take no room so the field stays
+        // one row high instead of wrapping onto an empty second line.
+        &--collapsed {
+            flex: 0 0 0;
+            width: 0;
+            min-width: 0;
         }
     }
 
