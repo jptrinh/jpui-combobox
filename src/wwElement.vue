@@ -1216,7 +1216,6 @@ context.local.data?.['combobox']?.['isOpen']
         align-items: center;
         align-content: center;
         gap: var(--chip-gap, 4px);
-        padding: 3px 0;
     }
 
     &__chip {
