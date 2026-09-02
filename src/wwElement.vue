@@ -500,9 +500,21 @@ export default {
 
         const { getIcon } = wwLib.useIcons();
 
+        // `getIcon` resolves to whatever the server answered, not to null, when the
+        // icon is missing — so the usual `(await getIcon(x)) || DEFAULT` is only safe
+        // on a host that 404s. Self-hosted behind an SPA fallback an unset icon asks
+        // for `/icons/null.svg`, gets `index.html` back with a 200, and that truthy
+        // HTML lands in `v-html`. Guard the empty code, and require the answer to
+        // look like an SVG.
+        const loadIcon = async (code, fallback) => {
+            if (!code) return fallback;
+            const html = await getIcon(code);
+            return /^\s*<svg[\s>]/i.test(html ?? '') ? html : fallback;
+        };
+
         const optionIconHtml = ref(DEFAULT_OPTION_ICON);
         watchEffect(async () => {
-            optionIconHtml.value = (await getIcon(props.content?.optionIcon)) || DEFAULT_OPTION_ICON;
+            optionIconHtml.value = await loadIcon(props.content?.optionIcon, DEFAULT_OPTION_ICON);
         });
 
         const optionIconStyle = computed(() => ({
@@ -520,12 +532,12 @@ export default {
 
         const chevronIconClosedHtml = ref(DEFAULT_CHEVRON_ICON);
         watchEffect(async () => {
-            chevronIconClosedHtml.value = (await getIcon(props.content?.chevronIconClosed)) || DEFAULT_CHEVRON_ICON;
+            chevronIconClosedHtml.value = await loadIcon(props.content?.chevronIconClosed, DEFAULT_CHEVRON_ICON);
         });
 
         const chevronIconOpenHtml = ref(DEFAULT_CHEVRON_ICON);
         watchEffect(async () => {
-            chevronIconOpenHtml.value = (await getIcon(props.content?.chevronIconOpen)) || DEFAULT_CHEVRON_ICON;
+            chevronIconOpenHtml.value = await loadIcon(props.content?.chevronIconOpen, DEFAULT_CHEVRON_ICON);
         });
 
         const chevronIconHtml = computed(() =>
@@ -550,7 +562,7 @@ export default {
 
         const createOptionIconHtml = ref(DEFAULT_CREATE_ICON);
         watchEffect(async () => {
-            createOptionIconHtml.value = (await getIcon(props.content?.createOptionIcon)) || DEFAULT_CREATE_ICON;
+            createOptionIconHtml.value = await loadIcon(props.content?.createOptionIcon, DEFAULT_CREATE_ICON);
         });
 
         const createOptionIconStyle = computed(() => ({
