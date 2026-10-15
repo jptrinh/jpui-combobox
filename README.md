@@ -52,6 +52,7 @@ An **Option** dropzone then appears in the navigator. What you drop there is aut
 |---|---|
 | `context.item.data.label` | The option's mapped label |
 | `context.item.data.value` | The option's mapped value |
+| `context.item.data.<key>` | Any other key of the option object (e.g. `icon`, `count`), as passed in `choices` |
 | `context.item.index` | Its position in the filtered list |
 
 The row wrapper keeps `role="option"`, click-to-select, hover highlighting, keyboard navigation and the `is-selected` / `is-active` / `is-disabled` classes — so the **Option** style properties (background, hover/selected background, padding, border radius) all still apply. Only the row's *contents* become yours.

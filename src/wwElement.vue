@@ -383,7 +383,7 @@ export default {
                 const disabled = Boolean(
                     resolveMappingFormula(props.content?.mappingDisabled, item) ?? item?.disabled ?? false
                 );
-                return { _uid: `${index}-${String(value)}`, label, value, disabled };
+                return { _uid: `${index}-${String(value)}`, label, value, disabled, raw: item };
             })
         );
 
@@ -488,10 +488,15 @@ export default {
             return processedOptions.value.filter(o => o.label.toLowerCase().includes(q)).map(markSelected);
         });
 
-        // Repeat context handed to the option dropzone. Deliberately narrow for now:
-        // `isSelected` / `disabled` stay out until they're needed.
+        // Repeat context handed to the option dropzone: every key of the original
+        // option, so extra keys (icon, count, ...) reach the row. The mapped
+        // `label` / `value` win over same-named raw keys.
         const optionContexts = computed(() =>
-            filteredOptions.value.map(o => ({ label: o.label, value: o.value }))
+            filteredOptions.value.map(o => ({
+                ...(o.raw && typeof o.raw === 'object' && !Array.isArray(o.raw) ? o.raw : {}),
+                label: o.label,
+                value: o.value,
+            }))
         );
 
         // ── Checked icon ──────────────────────────────────────────────────────

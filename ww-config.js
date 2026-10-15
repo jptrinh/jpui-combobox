@@ -898,7 +898,7 @@ export default {
             },
             propertyHelp: {
                 tooltip:
-                    'Design the option row yourself. The layout is authored once in the "Option" dropzone in the navigator and repeated for every option — bind text and images to `context.item.data.label` and `context.item.data.value`.',
+                    'Design the option row yourself. The layout is authored once in the "Option" dropzone in the navigator and repeated for every option — bind text and images to `context.item.data.label`, `context.item.data.value` or any other key of your options (`context.item.data.<key>`).',
             },
             /* wwEditor:end */
         },

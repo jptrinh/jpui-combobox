@@ -19,7 +19,7 @@
             "Type-to-filter search over the option labels",
             "Optional \"Create\" row when the query matches no existing option (emits `create`; you own persistence)",
             "Formula field mapping (`mappingLabel` / `mappingValue` / `mappingDisabled`) for any option shape",
-            "Custom option content: enable `customOptionContent` and author one row in the `optionElement` dropzone, repeated per option with `context.item.data.label` / `context.item.data.value`",
+            "Custom option content: enable `customOptionContent` and author one row in the `optionElement` dropzone, repeated per option with `context.item.data.label` / `context.item.data.value`, or any other key of the option object (`context.item.data.<key>`)",
             "Floating dropdown positioned with Floating UI (flip / shift / size), teleported so it escapes `overflow: hidden` ancestors",
             "WeWeb form integration: `fieldName`, `required`, `customValidation`, `validation`, form reset",
             "Keyboard: ArrowUp/ArrowDown to move, Enter to select, Escape to close, Backspace to remove the last chip",
@@ -682,7 +682,7 @@
     "slots": [
         {
             "name": "optionElement",
-            "description": "Dropzone holding ONE authored option row, repeated for every option in the dropdown. Only rendered when `customOptionContent` is on. Inside it, bind to `context.item.data.label` and `context.item.data.value`. Elements dropped here replace the built-in label + checked icon entirely, so re-add a selected-state affordance yourself if you need one. Arrives empty and unstyled — a seeded container cannot carry styles in a coded component."
+            "description": "Dropzone holding ONE authored option row, repeated for every option in the dropdown. Only rendered when `customOptionContent` is on. Inside it, bind to `context.item.data.label`, `context.item.data.value` or any other key of the option object (`context.item.data.<key>`). Elements dropped here replace the built-in label + checked icon entirely, so re-add a selected-state affordance yourself if you need one. Arrives empty and unstyled — a seeded container cannot carry styles in a coded component."
         }
     ],
     "specifications": [
