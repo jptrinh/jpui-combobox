@@ -33,6 +33,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Create option label | Text | Label template for the create option — use `{query}` as a placeholder |
 | Clearable | On/Off | Show a × button when a value is selected |
 | Close on select | On/Off | Close the dropdown after picking an option |
+| Keyboard on focus | Select | Touch screens. **Auto**: the virtual keyboard opens on focus. **On demand**: focus shows the options without the keyboard; a keyboard button in the field, or a second tap, opens it |
 | Disabled | On/Off | Disable the entire combobox |
 | Read only | On/Off | Show the value without allowing changes |
 | Invalid | On/Off | Sets `aria-invalid` and applies the `invalid` state for validation styling |
@@ -41,6 +42,7 @@ A searchable, accessible combobox (select with type-ahead filtering) for [WeWeb]
 | Clear button label | Text | Screen-reader name for the × button |
 | Toggle button label | Text | Screen-reader name for the chevron button |
 | Remove chip label | Text | Prefix for chip remove buttons — "Remove" announces as "Remove Banana" |
+| Keyboard button label | Text | Screen-reader name for the keyboard button (On demand only) |
 
 ## Custom option content
 
@@ -118,6 +120,14 @@ native style panel to get a keyboard-only focus ring.
 | Set value | `value` | Select an option by value (an array in multiple mode) |
 | Reset value | — | Clear the current selection. Does *not* focus the field or open the dropdown |
 | Focus | — | Focus the input |
+| Show keyboard | — | Focus the input with the virtual keyboard open. May do nothing on iOS (see below) |
+
+> **Keyboard on demand.** The field focuses with `inputmode="none"`, then switches to
+> `text` and re-focuses when the keyboard is asked for. iOS only raises the keyboard
+> for a focus made inside the tap itself, so the keyboard button and the second tap
+> work everywhere, while **Show keyboard** from a workflow (which runs after the tap)
+> may not on iPhone. The keyboard button only shows on touch screens, and always in
+> the editor. Leaving the combobox resets it to no keyboard.
 
 ## Local context
 
