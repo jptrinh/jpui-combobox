@@ -1466,6 +1466,8 @@ context.local.data?.['combobox']?.['isOpen']
     .combobox__option-slot {
         flex: 1;
         min-width: 0;
+        align-self: stretch;
+        justify-content: flex-start;
     }
 
     .combobox__empty {
