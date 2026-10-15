@@ -112,6 +112,7 @@ export default {
                     'createOptionLabel',
                     'clearable',
                     'closeOnSelect',
+                    'keyboardOnFocus',
                     'disabled',
                     'readonly',
                     'invalid',
@@ -123,7 +124,7 @@ export default {
             {
                 label: 'Accessibility',
                 isCollapsible: true,
-                properties: ['ariaLabel', 'clearAriaLabel', 'toggleAriaLabel', 'removeChipAriaLabel'],
+                properties: ['ariaLabel', 'clearAriaLabel', 'toggleAriaLabel', 'removeChipAriaLabel', 'keyboardAriaLabel'],
             },
             'formInfobox',
             ['fieldName', 'customValidation', 'validation'],
@@ -160,6 +161,7 @@ export default {
         },
         { label: 'Reset value', action: 'actionResetValue', args: [] },
         { label: 'Focus', action: 'actionFocus', args: [] },
+        { label: 'Show keyboard', action: 'actionShowKeyboard', args: [] },
     ],
     properties: {
         // ── DATA ──────────────────────────────────────────────────────────────
@@ -345,6 +347,26 @@ export default {
             },
             /* wwEditor:end */
         },
+        keyboardOnFocus: {
+            label: { en: 'Keyboard on focus' },
+            type: 'TextSelect',
+            section: 'settings',
+            options: {
+                options: [
+                    { value: 'auto', label: 'Auto' },
+                    { value: 'onDemand', label: 'On demand' },
+                ],
+            },
+            defaultValue: 'auto',
+            bindable: true,
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip:
+                    'Touch screens. "auto": the virtual keyboard opens on focus. "onDemand": focusing shows the options without the keyboard; a keyboard button in the field, or a second tap, opens it.',
+            },
+            /* wwEditor:end */
+        },
         disabled: {
             label: { en: 'Disabled' },
             type: 'OnOff',
@@ -477,6 +499,21 @@ export default {
             bindingValidation: {
                 type: 'string',
                 tooltip: 'Prefix for the chip remove button, e.g. "Remove" → "Remove Banana".',
+            },
+            /* wwEditor:end */
+        },
+        keyboardAriaLabel: {
+            label: { en: 'Keyboard button label' },
+            type: 'Text',
+            section: 'settings',
+            multiLang: true,
+            bindable: true,
+            defaultValue: { en: 'Show keyboard' },
+            hidden: content => content?.keyboardOnFocus !== 'onDemand',
+            /* wwEditor:start */
+            bindingValidation: {
+                type: 'string',
+                tooltip: 'Screen-reader name for the button that opens the virtual keyboard.',
             },
             /* wwEditor:end */
         },

@@ -6,9 +6,11 @@
             'is-disabled': isDisabled,
             'is-readonly': isReadonly,
             'is-open': isOpenEffective,
+            'is-editing': isEditing,
         }"
         :style="triggerCssVars"
         @keydown="handleKeydown"
+        @pointerdown="handlePointerdown"
     >
         <!-- Field: chips (multiple) + search input -->
         <div v-if="isMultiple" class="combobox__field" @click.self="handleFieldClick">
@@ -45,6 +47,7 @@
                 :aria-invalid="isInvalid || undefined"
                 :disabled="isDisabled"
                 :readonly="isReadonly"
+                :inputmode="inputMode"
                 :placeholder="selectedOptions.length ? '' : placeholderText"
                 :value="inputText"
                 @input="handleInput"
@@ -71,6 +74,7 @@
             :aria-invalid="isInvalid || undefined"
             :disabled="isDisabled"
             :readonly="isReadonly"
+            :inputmode="inputMode"
             :placeholder="placeholderText"
             :value="inputText"
             @input="handleInput"
@@ -78,6 +82,22 @@
             @blur="handleBlur"
             @click="handleInputClick"
         />
+
+        <!-- Keyboard button (Keyboard on focus: on demand) -->
+        <button
+            v-if="showKeyboardButton"
+            class="combobox__keyboard-btn"
+            type="button"
+            tabindex="-1"
+            :aria-label="keyboardLabel"
+            @click.stop="showKeyboard"
+            @mousedown.prevent
+        >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10" />
+            </svg>
+        </button>
 
         <!-- Clear button -->
         <button
@@ -608,6 +628,9 @@ export default {
         const removeChipLabel = computed(
             () => wwLib.wwLang?.getText(props.content?.removeChipAriaLabel) || 'Remove'
         );
+        const keyboardLabel = computed(
+            () => wwLib.wwLang?.getText(props.content?.keyboardAriaLabel) || 'Show keyboard'
+        );
 
         const allowCreate = computed(() => props.content?.allowCreate || false);
         const createOptionText = computed(() => {
@@ -736,7 +759,50 @@ export default {
             emit('trigger-event', { name: 'search', event: { value: event.target.value } });
         }
 
+        // ── Keyboard on focus ─────────────────────────────────────────────────
+        // "On demand": the input focuses with inputmode="none" (no virtual
+        // keyboard) until the user asks for it — keyboard button or a second tap.
+        const isKeyboardOnDemand = computed(() => props.content?.keyboardOnFocus === 'onDemand');
+        const keyboardRequested = ref(false);
+        const inputMode = computed(() =>
+            isKeyboardOnDemand.value && !keyboardRequested.value ? 'none' : undefined
+        );
+        const showKeyboardButton = computed(
+            () => isKeyboardOnDemand.value && !keyboardRequested.value && !isDisabled.value && !isReadonly.value
+        );
+
+        // Must run synchronously inside a tap handler: iOS only raises the
+        // keyboard for a focus() that is part of the user gesture.
+        function showKeyboard() {
+            const input = inputRef.value;
+            if (!input || isDisabled.value || isReadonly.value) return;
+            keyboardRequested.value = true;
+            // Set on the node now, not on the next render: focus() reads it.
+            input.inputMode = 'text';
+            // An already-focused field ignores the inputmode change until it is
+            // re-focused. The blur is absorbed by handleBlur's delayed check.
+            if (wwLib.getFrontDocument().activeElement === input) input.blur();
+            input.focus({ preventScroll: true });
+        }
+
+        // A tap's click can't tell "this tap focused the field" from "the field
+        // was already focused" — record it before the tap moves focus.
+        let tapOnFocusedInput = false;
+        function handlePointerdown(event) {
+            tapOnFocusedInput =
+                event?.pointerType !== 'mouse' &&
+                isReallyFocused.value &&
+                wwLib.getFrontDocument().activeElement === inputRef.value;
+        }
+
+        function showKeyboardOnSecondTap() {
+            if (!tapOnFocusedInput || !isKeyboardOnDemand.value || keyboardRequested.value) return;
+            tapOnFocusedInput = false;
+            showKeyboard();
+        }
+
         function handleInputClick() {
+            showKeyboardOnSecondTap();
             if (!isOpen.value) openDropdown();
         }
 
@@ -744,6 +810,7 @@ export default {
         // a collapsed input) has to behave like clicking the input itself.
         function handleFieldClick() {
             if (isDisabled.value || isReadonly.value) return;
+            showKeyboardOnSecondTap();
             inputRef.value?.focus();
             if (!isOpen.value) openDropdown();
         }
@@ -789,6 +856,7 @@ export default {
                 const drop = dropdownRef.value;
                 const trigger = triggerRef.value;
                 if (!drop?.contains(focused) && !trigger?.contains(focused)) {
+                    keyboardRequested.value = false;
                     setFocused(false);
                     closeDropdown();
                     emit('trigger-event', { name: 'blur', event: null });
@@ -1131,6 +1199,9 @@ context.local.data?.['combobox']?.['isOpen']
 
         function actionResetValue() { resetValue(); }
         function actionFocus() { inputRef.value?.focus(); }
+        // Workflows run after the tap handler returns, so iOS may not raise the
+        // keyboard from here — the built-in button and second tap always can.
+        function actionShowKeyboard() { showKeyboard(); }
 
         return {
             triggerRef,
@@ -1198,9 +1269,13 @@ context.local.data?.['combobox']?.['isOpen']
             actionSetValue,
             actionResetValue,
             actionFocus,
-            /* wwEditor:start */
+            actionShowKeyboard,
+            inputMode,
+            showKeyboardButton,
+            keyboardLabel,
+            showKeyboard,
+            handlePointerdown,
             isEditing,
-            /* wwEditor:end */
         };
     },
 };
@@ -1327,6 +1402,7 @@ context.local.data?.['combobox']?.['isOpen']
         }
     }
 
+    &__keyboard-btn,
     &__clear-btn,
     &__chevron-btn {
         flex-shrink: 0;
@@ -1357,6 +1433,28 @@ context.local.data?.['combobox']?.['isOpen']
     &__chevron-btn {
         background: var(--chevron-btn-bg, transparent);
         border-radius: var(--chevron-btn-border-radius, 4px);
+    }
+
+    // Touch screens only (no virtual keyboard to hold back elsewhere), but
+    // always visible while editing so it can be seen and styled.
+    &__keyboard-btn {
+        display: none;
+        background: transparent;
+        border-radius: var(--chevron-btn-border-radius, 4px);
+
+        svg {
+            width: var(--icon-size, 16px);
+            height: var(--icon-size, 16px);
+            display: block;
+        }
+
+        @media (any-pointer: coarse) {
+            display: flex;
+        }
+    }
+
+    &.is-editing &__keyboard-btn {
+        display: flex;
     }
 
     &__chevron-icon {

@@ -102,6 +102,13 @@
             "defaultValue": true
         },
         {
+            "name": "keyboardOnFocus",
+            "description": "Touch screens only. `auto`: the virtual keyboard opens when the field gets focus. `onDemand`: the field focuses with `inputmode=\"none\"` (options visible, no keyboard) and a keyboard button appears in the field; that button, or a second tap on the focused field, opens the keyboard. Back to no keyboard once focus leaves the combobox.",
+            "type": "string",
+            "options": ["auto", "onDemand"],
+            "defaultValue": "auto"
+        },
+        {
             "name": "disabled",
             "description": "Disable the whole combobox. Activates the `disabled` state.",
             "type": "boolean",
@@ -148,6 +155,12 @@
             "description": "Prefix for the chip remove button — 'Remove' announces as 'Remove Banana'. Multiple mode only. Multilang.",
             "type": "string",
             "defaultValue": "Remove"
+        },
+        {
+            "name": "keyboardAriaLabel",
+            "description": "Screen-reader name for the keyboard button. Only when `keyboardOnFocus` is `onDemand`. Multilang.",
+            "type": "string",
+            "defaultValue": "Show keyboard"
         },
         {
             "name": "fieldName",
@@ -633,6 +646,12 @@
             "label": "Focus",
             "actionName": "actionFocus",
             "description": "Move keyboard focus into the search input without opening the dropdown.",
+            "args": []
+        },
+        {
+            "label": "Show keyboard",
+            "actionName": "actionShowKeyboard",
+            "description": "Focus the input with the virtual keyboard open, for `keyboardOnFocus: onDemand`. iOS only raises the keyboard for a focus made inside the tap itself, and a workflow runs after it, so this may do nothing on iPhone — the built-in keyboard button and the second tap always work.",
             "args": []
         }
     ],
